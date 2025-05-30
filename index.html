@@ -1,626 +1,630 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>简搜</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      transition: all 0.3s cubic-bezier(0.2, 0.8, 0.4, 1.1);
-    }
+  <meta name="description" content="简搜 - 一个简洁的搜索引擎，提供多种搜索引擎选择，支持夜间模式和实时壁纸。">
+  <title>简 搜</title>
+</head>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.4, 1.1);
+  }
 
-    html, body {
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-      font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-      color: #eee;
-      background: transparent;
-    }
+  html,
+  body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    color: #eee;
+    background: transparent;
+  }
 
-    .bg {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-size: cover;
-      background-position: center center;
-      background-color: #2a2a2a;
-      opacity: 0;
-      z-index: -2;
-      transition: opacity 1.5s ease-in-out, filter 0.8s cubic-bezier(0.4, 0, 0.2, 1.1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1.1);
-      will-change: opacity, filter, transform;
-    }
+  .bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-size: cover;
+    background-position: center center;
+    background-color: #2a2a2a;
+    opacity: 0;
+    z-index: -2;
+    transition: opacity 1.5s ease-in-out, filter 0.8s cubic-bezier(0.4, 0, 0.2, 1.1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1.1);
+    will-change: opacity, filter, transform;
+  }
 
-    .bg.visible {
-      opacity: 1;
-    }
+  .bg.visible {
+    opacity: 1;
+  }
 
-    .bg.blur {
-      filter: blur(8px) brightness(0.9);
-      transform: scale(1.05);
-    }
+  .bg.blur {
+    filter: blur(8px) brightness(0.9);
+    transform: scale(1.05);
+  }
 
-    .bg-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.8) 100%);
-      z-index: -1;
-      transition: background 0.8s ease-in-out;
-    }
+  .bg-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.8) 100%);
+    z-index: -1;
+    transition: background 0.8s ease-in-out;
+  }
 
-    .bg-loading {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 18px;
-      font-weight: 300;
-      opacity: 0;
-      transition: opacity 0.5s ease;
-    }
+  .bg-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 18px;
+    font-weight: 300;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
 
-    .bg-loading.visible {
-      opacity: 1;
-    }
+  .bg-loading.visible {
+    opacity: 1;
+  }
 
-    /* 优化后的背景信息样式 */
-    .bg-info {
-      position: absolute;
-      bottom: 60px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.8);
-      padding: 8px 16px;
-      border-radius: 20px;
-      backdrop-filter: blur(5px);
-      max-width: 80%;
-      z-index: 10;
-      transition: all 0.4s ease;
-      text-align: center;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+  /* 优化后的背景信息样式 */
+  .bg-info {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
+    padding: 8px 16px;
+    border-radius: 20px;
+    backdrop-filter: blur(5px);
+    max-width: 80%;
+    z-index: 10;
+    transition: all 0.4s ease;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-    .bg-info a {
-      color: rgba(255, 255, 255, 0.95);
-      text-decoration: none;
-      border-bottom: 1px dotted rgba(255, 255, 255, 0.5);
-      transition: all 0.3s ease;
-    }
+  .bg-info a {
+    color: rgba(255, 255, 255, 0.95);
+    text-decoration: none;
+    border-bottom: 1px dotted rgba(255, 255, 255, 0.5);
+    transition: all 0.3s ease;
+  }
 
-    .bg-info a:hover {
-      color: #4dabf7;
-      border-bottom: 1px solid #4dabf7;
-    }
+  .bg-info a:hover {
+    color: #4dabf7;
+    border-bottom: 1px solid #4dabf7;
+  }
 
+  .container {
+    width: 100%;
+    max-width: 520px;
+    margin: 120px auto 0 auto;
+    position: relative;
+    z-index: 1;
+    padding: 0 20px;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1.1);
+  }
+
+  #time {
+    text-align: center;
+    font-size: 48px;
+    color: #fff;
+    margin-bottom: 24px;
+    user-select: none;
+    font-weight: 200;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    letter-spacing: 1px;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1.1), opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1.1);
+  }
+
+  body.night #time {
+    color: #fff;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  }
+
+  .search-container {
+    position: relative;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1.1);
+  }
+
+  #search {
+    width: 100%;
+    padding: 16px 54px 16px 54px;
+    font-size: 18px;
+    border: none;
+    border-radius: 60px;
+    outline: none;
+    cursor: text;
+    background-color: rgba(255, 255, 255, 0.85);
+    color: #333;
+    font-weight: 400;
+    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1.1), color 0.5s cubic-bezier(0.4, 0, 0.2, 1.1), padding 0.5s cubic-bezier(0.4, 0, 0.2, 1.1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1.1), border-color 0.3s ease;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    will-change: transform, background-color;
+  }
+
+  #search::placeholder {
+    color: #777;
+    font-weight: 300;
+    transition: color 0.4s ease;
+  }
+
+  #search.focused {
+    background-color: rgba(255, 255, 255, 0.95);
+    color: #000;
+    transform: scale(1.02);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  #search.not-focused {
+    background-color: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(6px);
+    color: #fff !important;
+    transform: scale(1);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1.1);
+    color: #c3c3c3;
+    font-size: 20px;
+    z-index: 5;
+    will-change: opacity;
+  }
+
+  #search.focused+.search-icon {
+    opacity: 1;
+    transform: translateY(-60%);
+  }
+
+  .engine-switcher {
+    position: absolute;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 24px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    border-left: 1px solid rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 5;
+  }
+
+  .engine-switcher:hover {
+    transform: translateY(-50%) scale(1.05);
+  }
+
+  .engine-switcher span {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-right: 8px;
+  }
+
+  .engine-switcher::after {
+    content: "▼";
+    font-size: 10px;
+    opacity: 0.7;
+  }
+
+  body.night .engine-switcher {
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  body.night .engine-switcher span {
+    color: #eee;
+  }
+
+  .suggestions {
+    position: absolute;
+    top: 62px;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    box-shadow: 0 12px 32px rgba(31, 38, 135, 0.3);
+    font-size: 16px;
+    z-index: 10;
+    display: none;
+    padding: 12px 0;
+    margin-top: 10px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: opacity 0.4s ease-out, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1.1);
+    opacity: 0;
+    overflow: hidden;
+    transform: translateY(-10px);
+  }
+
+  .suggestions.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .suggestions li {
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1.1);
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    color: #333;
+  }
+
+  .suggestions li:before {
+    content: "⌕";
+    margin-right: 12px;
+    font-size: 18px;
+    opacity: 0.6;
+    transition: transform 0.3s ease;
+  }
+
+  .suggestions li:hover {
+    background-color: #e6f0ff;
+    transform: scale(1.02);
+  }
+
+  .suggestions li:hover:before {
+    transform: scale(1.2);
+  }
+
+  .suggestions li.loading {
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .suggestions li.loading:before {
+    content: "";
+    display: none;
+  }
+
+  .suggestions li.error {
+    color: #ff6b6b;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .suggestions li.error:before {
+    content: "⚠";
+    display: inline;
+  }
+
+  /* 夜间模式全局样式 */
+  body.night {
+    background-color: #121212;
+    color: #eee;
+  }
+
+  body.night .bg-overlay {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.95) 100%);
+  }
+
+  /* 夜间模式搜索框样式 */
+  body.night #search {
+    background-color: rgba(30, 30, 30, 0.8);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  body.night #search.focused {
+    background-color: rgba(50, 50, 50, 0.95);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  body.night #search::placeholder {
+    color: #aaa;
+  }
+
+  body.night #search.not-focused {
+    background-color: rgba(30, 30, 30, 0.6);
+    color: #fff !important;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  /* 夜间模式建议框样式 */
+  body.night .suggestions {
+    background: rgba(40, 40, 40, 0.98);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+    color: #eee;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  body.night .suggestions li {
+    color: #eee;
+  }
+
+  body.night .suggestions li:hover {
+    background-color: rgba(60, 60, 60, 0.9);
+  }
+
+  body.night .suggestions li:before {
+    color: #aaa;
+  }
+
+  .shortcut-hint {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1.1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1.1);
+  }
+
+  body.night .shortcut-hint {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  #search.focused~.shortcut-hint {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .blur-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    backdrop-filter: blur(0);
+    opacity: 0;
+    z-index: 0;
+    transition: backdrop-filter 0.8s ease, opacity 0.8s ease;
+  }
+
+  .blur-overlay.visible {
+    backdrop-filter: blur(10px);
+    opacity: 1;
+  }
+
+  @media (max-width: 480px) {
     .container {
-      width: 100%;
-      max-width: 520px;
-      margin: 120px auto 0 auto;
-      position: relative;
-      z-index: 1;
-      padding: 0 20px;
-      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1.1);
+      margin-top: 60px;
     }
 
     #time {
-      text-align: center;
-      font-size: 48px;
-      color: #fff;
-      margin-bottom: 24px;
-      user-select: none;
-      font-weight: 200;
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-      letter-spacing: 1px;
-      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1.1), opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1.1);
-    }
-
-    body.night #time {
-      color: #fff;
-      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
-    }
-
-    .search-container {
-      position: relative;
-      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1.1);
+      font-size: 36px;
     }
 
     #search {
-      width: 100%;
-      padding: 16px 54px 16px 54px;
-      font-size: 18px;
-      border: none;
-      border-radius: 60px;
-      outline: none;
-      cursor: text;
-      background-color: rgba(255, 255, 255, 0.85);
-      color: #333;
-      font-weight: 400;
-      transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1.1), color 0.5s cubic-bezier(0.4, 0, 0.2, 1.1), padding 0.5s cubic-bezier(0.4, 0, 0.2, 1.1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1.1), border-color 0.3s ease;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      will-change: transform, background-color;
-    }
-
-    #search::placeholder {
-      color: #777;
-      font-weight: 300;
-      transition: color 0.4s ease;
+      padding: 14px 50px 14px 50px;
     }
 
     #search.focused {
-      background-color: rgba(255, 255, 255, 0.95);
-      color: #000;
-      transform: scale(1.02);
-      border-color: rgba(255, 255, 255, 0.3);
-    }
-
-    #search.not-focused {
-      background-color: rgba(255, 255, 255, 0.4);
-      backdrop-filter: blur(6px);
-      color: #fff !important;
-      transform: scale(1);
-      border-color: rgba(255, 255, 255, 0.1);
+      transform: scale(1.01);
     }
 
     .search-icon {
-      position: absolute;
-      left: 24px;
-      top: 50%;
-      transform: translateY(-50%);
-      opacity: 0;
-      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1.1);
-      color: #c3c3c3;
-      font-size: 20px;
-      z-index: 5;
-      will-change: opacity;
-    }
-
-    #search.focused+.search-icon {
-      opacity: 1;
-      transform: translateY(-60%);
+      left: 20px;
     }
 
     .engine-switcher {
-      position: absolute;
-      right: 24px;
-      top: 50%;
-      transform: translateY(-50%);
-      height: 24px;
-      display: flex;
-      align-items: center;
-      padding: 0 10px;
-      border-left: 1px solid rgba(0, 0, 0, 0.1);
-      cursor: pointer;
-      transition: all 0.3s ease;
-      z-index: 5;
-    }
-
-    .engine-switcher:hover {
-      transform: translateY(-50%) scale(1.05);
+      right: 20px;
+      padding: 0 8px;
     }
 
     .engine-switcher span {
-      font-size: 14px;
-      font-weight: 500;
-      color: #333;
-      margin-right: 8px;
-    }
-
-    .engine-switcher::after {
-      content: "▼";
-      font-size: 10px;
-      opacity: 0.7;
-    }
-
-    body.night .engine-switcher {
-      border-left: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    body.night .engine-switcher span {
-      color: #eee;
-    }
-
-    .suggestions {
-      position: absolute;
-      top: 62px;
-      left: 0;
-      right: 0;
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 20px;
-      box-shadow: 0 12px 32px rgba(31, 38, 135, 0.3);
-      font-size: 16px;
-      z-index: 10;
-      display: none;
-      padding: 12px 0;
-      margin-top: 10px;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(0, 0, 0, 0.05);
-      transition: opacity 0.4s ease-out, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1.1);
-      opacity: 0;
-      overflow: hidden;
-      transform: translateY(-10px);
-    }
-
-    .suggestions.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .suggestions li {
-      padding: 12px 24px;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1.1);
-      display: flex;
-      align-items: center;
-      font-weight: 500;
-      color: #333;
-    }
-
-    .suggestions li:before {
-      content: "⌕";
-      margin-right: 12px;
-      font-size: 18px;
-      opacity: 0.6;
-      transition: transform 0.3s ease;
-    }
-
-    .suggestions li:hover {
-      background-color: #e6f0ff;
-      transform: scale(1.02);
-    }
-
-    .suggestions li:hover:before {
-      transform: scale(1.2);
-    }
-
-    .suggestions li.loading {
-      justify-content: center;
-      pointer-events: none;
-    }
-
-    .suggestions li.loading:before {
-      content: "";
-      display: none;
-    }
-
-    .suggestions li.error {
-      color: #ff6b6b;
-      justify-content: center;
-      pointer-events: none;
-    }
-
-    .suggestions li.error:before {
-      content: "⚠";
-      display: inline;
-    }
-
-    /* 夜间模式全局样式 */
-    body.night {
-      background-color: #121212;
-      color: #eee;
-    }
-
-    body.night .bg-overlay {
-      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.95) 100%);
-    }
-
-    /* 夜间模式搜索框样式 */
-    body.night #search {
-      background-color: rgba(30, 30, 30, 0.8);
-      color: #fff;
-      border-color: rgba(255, 255, 255, 0.15);
-    }
-
-    body.night #search.focused {
-      background-color: rgba(50, 50, 50, 0.95);
-      color: #fff;
-      border-color: rgba(255, 255, 255, 0.25);
-    }
-
-    body.night #search::placeholder {
-      color: #aaa;
-    }
-
-    body.night #search.not-focused {
-      background-color: rgba(30, 30, 30, 0.6);
-      color: #fff !important;
-      border-color: rgba(255, 255, 255, 0.1);
-    }
-
-    /* 夜间模式建议框样式 */
-    body.night .suggestions {
-      background: rgba(40, 40, 40, 0.98);
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
-      color: #eee;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-    }
-
-    body.night .suggestions li {
-      color: #eee;
-    }
-
-    body.night .suggestions li:hover {
-      background-color: rgba(60, 60, 60, 0.9);
-    }
-
-    body.night .suggestions li:before {
-      color: #aaa;
-    }
-
-    .shortcut-hint {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 14px;
-      color: rgba(255, 255, 255, 0.6);
-      transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1.1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1.1);
-    }
-
-    body.night .shortcut-hint {
-      color: rgba(255, 255, 255, 0.5);
-    }
-
-    #search.focused~.shortcut-hint {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-
-    .blur-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      backdrop-filter: blur(0);
-      opacity: 0;
-      z-index: 0;
-      transition: backdrop-filter 0.8s ease, opacity 0.8s ease;
-    }
-
-    .blur-overlay.visible {
-      backdrop-filter: blur(10px);
-      opacity: 1;
-    }
-
-    @media (max-width: 480px) {
-      .container {
-        margin-top: 60px;
-      }
-
-      #time {
-        font-size: 36px;
-      }
-
-      #search {
-        padding: 14px 50px 14px 50px;
-      }
-
-      #search.focused {
-        transform: scale(1.01);
-      }
-
-      .search-icon {
-        left: 20px;
-      }
-
-      .engine-switcher {
-        right: 20px;
-        padding: 0 8px;
-      }
-
-      .engine-switcher span {
-        font-size: 12px;
-      }
-      
-      .bg-info {
-        bottom: 60px;
-        left: 10px;
-        right: 10px;
-        max-width: 100%;
-        font-size: 11px;
-        padding: 6px 10px;
-        left: 50%;
-        transform: translateX(-50%);
-      }
-    }
-
-    .floating-logo {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      font-size: 24px;
-      font-weight: bold;
-      color: rgba(255, 255, 255, 0.9);
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-      opacity: 0.8;
-      z-index: 10;
-    }
-
-    body.night .floating-logo {
-      color: rgba(255, 255, 255, 0.95);
-    }
-
-    .floating-logo span {
-      color: #4dabf7;
-    }
-
-    .powered-by {
-      position: absolute;
-      bottom: 20px;
-      right: 20px;
       font-size: 12px;
-      color: rgba(255, 255, 255, 0.5);
-      text-align: right;
-      z-index: 10;
     }
 
-    body.night .powered-by {
-      color: rgba(255, 255, 255, 0.4);
+    .bg-info {
+      bottom: 60px;
+      left: 10px;
+      right: 10px;
+      max-width: 100%;
+      font-size: 11px;
+      padding: 6px 10px;
+      left: 50%;
+      transform: translateX(-50%);
     }
+  }
 
-    .powered-by a {
-      color: rgba(255, 255, 255, 0.7);
-      text-decoration: none;
-      transition: color 0.3s ease;
-    }
+  .floating-logo {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 24px;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    opacity: 0.8;
+    z-index: 10;
+  }
 
-    body.night .powered-by a {
-      color: rgba(255, 255, 255, 0.6);
-    }
+  body.night .floating-logo {
+    color: rgba(255, 255, 255, 0.95);
+  }
 
-    .powered-by a:hover {
-      color: #4dabf7;
-      text-decoration: underline;
-    }
+  .floating-logo span {
+    color: #4dabf7;
+  }
 
-    .loading-spinner {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(0, 0, 0, 0.1);
-      border-radius: 50%;
-      border-top-color: #4dabf7;
-      animation: spin 1s ease-in-out infinite;
-      margin-right: 10px;
-    }
+  .powered-by {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: right;
+    z-index: 10;
+  }
 
-    body.night .loading-spinner {
-      border-top-color: #4dabf7;
-    }
+  body.night .powered-by {
+    color: rgba(255, 255, 255, 0.4);
+  }
 
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
+  .powered-by a {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
 
-    .api-status {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.5);
-      z-index: 10;
-      display: flex;
-      align-items: center;
-    }
+  body.night .powered-by a {
+    color: rgba(255, 255, 255, 0.6);
+  }
 
-    .status-indicator {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      margin-right: 8px;
-      background-color: #4CAF50;
-      box-shadow: 0 0 8px #4CAF50;
-    }
+  .powered-by a:hover {
+    color: #4dabf7;
+    text-decoration: underline;
+  }
 
-    .status-indicator.offline {
-      background-color: #f44336;
-      box-shadow: 0 0 8px #f44336;
-    }
+  .loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #4dabf7;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 10px;
+  }
 
-    .engine-options {
-      position: absolute;
-      top: calc(100% + 10px);
-      right: 0;
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-      padding: 8px 0;
-      min-width: 120px;
-      display: none;
-      z-index: 20;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(0, 0, 0, 0.05);
-      transform: translateY(10px);
-      opacity: 0;
-      transition: all 0.3s ease;
-    }
+  body.night .loading-spinner {
+    border-top-color: #4dabf7;
+  }
 
-    .engine-options.visible {
-      display: block;
-      opacity: 1;
-      transform: translateY(0);
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
     }
+  }
 
-    .engine-option {
-      padding: 10px 16px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-size: 14px;
-      color: #333;
-      display: flex;
-      align-items: center;
-    }
+  .api-status {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+  }
 
-    .engine-option:hover {
-      background: #e6f0ff;
-    }
+  .status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+    background-color: #4CAF50;
+    box-shadow: 0 0 8px #4CAF50;
+  }
 
-    .engine-option.active {
-      background: #4dabf7;
-      color: white;
-    }
+  .status-indicator.offline {
+    background-color: #f44336;
+    box-shadow: 0 0 8px #f44336;
+  }
 
-    .engine-option.active:hover {
-      background: #3a8fd4;
-    }
+  .engine-options {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    padding: 8px 0;
+    min-width: 120px;
+    display: none;
+    z-index: 20;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transform: translateY(10px);
+    opacity: 0;
+    transition: all 0.3s ease;
+  }
 
-    .engine-icon {
-      width: 20px;
-      height: 20px;
-      margin-right: 10px;
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
-    }
+  .engine-options.visible {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+  }
 
-    .baidu-icon {
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23293B96" d="M4.2 11.2c0 3.5 2.6 6.3 5.8 6.3 1.3 0 2.5-.4 3.5-1.1l-1.5-2.8c-.6.4-1.3.6-2 .6-1.8 0-3.3-1.4-3.3-3.1 0-1.7 1.5-3.1 3.3-3.1.7 0 1.4.2 2 .6l1.5-2.8c-1-.7-2.2-1.1-3.5-1.1-3.2 0-5.8 2.8-5.8 6.3zm15.6 0c0-3.5-2.6-6.3-5.8-6.3-1.3 0-2.5.4-3.5 1.1l1.5 2.8c.6-.4 1.3-.6 2-.6 1.8 0 3.3 1.4 3.3 3.1 0 1.7-1.5-3.1-3.3 3.1-.7 0-1.4-.2-2-.6l-1.5 2.8c1 .7 2.2 1.1 3.5 1.1 3.2 0 5.8-2.8 5.8-6.3z"/></svg>');
-    }
+  .engine-option {
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    color: #333;
+    display: flex;
+    align-items: center;
+  }
 
-    .bing-icon {
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23007DAA" d="M5.71 3l4.15 2.42 1.13 5.93-1.39 2.45 3.89 1.41L16 17.75l-2.34 1.34-1.03 3.91H5.71l-.02-4.24 2.46-1.01 1.5-4.93-1.54-2.91L5.71 3zm10.58 18l-1.15-4.37 2.49-1.43.01-4.38-1.48-2.9-1.16-5.94L18.29 3l.02 4.24-2.46 1.01-1.5 4.93 1.54 2.91 3.89-1.41L24 17.75l-2.34 1.34-1.03 3.91h-4.34z"/></svg>');
-    }
+  .engine-option:hover {
+    background: #e6f0ff;
+  }
 
-    .google-icon {
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%234285F4" d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z"/></svg>');
-    }
+  .engine-option.active {
+    background: #4dabf7;
+    color: white;
+  }
 
-    .duckduckgo-icon {
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23DE5833" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-.002 4.5c1.206 0 2.218.868 2.438 2.023h-4.88A2.44 2.44 0 0 1 12 4.5zm-4.5 4.5h9v1.5h-9V9zm0 3h9v1.5h-9V12zm0 3h9v1.5h-9V15zm-1.5 3.002c0-.828.672-1.5 1.5-1.5h9c.828 0 1.5.672 1.5 1.5v.498h-12v-.498z"/></svg>');
-    }
+  .engine-option.active:hover {
+    background: #3a8fd4;
+  }
 
-    body.night .engine-options {
-      background: rgba(40, 40, 40, 0.98);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-    }
+  .engine-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
 
-    body.night .engine-option {
-      color: #eee;
-    }
+  .baidu-icon {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23293B96" d="M4.2 11.2c0 3.5 2.6 6.3 5.8 6.3 1.3 0 2.5-.4 3.5-1.1l-1.5-2.8c-.6.4-1.3.6-2 .6-1.8 0-3.3-1.4-3.3-3.1 0-1.7 1.5-3.1 3.3-3.1.7 0 1.4.2 2 .6l1.5-2.8c-1-.7-2.2-1.1-3.5-1.1-3.2 0-5.8 2.8-5.8 6.3zm15.6 0c0-3.5-2.6-6.3-5.8-6.3-1.3 0-2.5.4-3.5 1.1l1.5 2.8c.6-.4 1.3-.6 2-.6 1.8 0 3.3 1.4 3.3 3.1 0 1.7-1.5-3.1-3.3 3.1-.7 0-1.4-.2-2-.6l-1.5 2.8c1 .7 2.2 1.1 3.5 1.1 3.2 0 5.8-2.8 5.8-6.3z"/></svg>');
+  }
 
-    body.night .engine-option:hover {
-      background: rgba(60, 60, 60, 0.9);
-    }
+  .bing-icon {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23007DAA" d="M5.71 3l4.15 2.42 1.13 5.93-1.39 2.45 3.89 1.41L16 17.75l-2.34 1.34-1.03 3.91H5.71l-.02-4.24 2.46-1.01 1.5-4.93-1.54-2.91L5.71 3zm10.58 18l-1.15-4.37 2.49-1.43.01-4.38-1.48-2.9-1.16-5.94L18.29 3l.02 4.24-2.46 1.01-1.5 4.93 1.54 2.91 3.89-1.41L24 17.75l-2.34 1.34-1.03 3.91h-4.34z"/></svg>');
+  }
 
-    body.night .engine-option.active {
-      background: #4dabf7;
-    }
-  </style>
+  .google-icon {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%234285F4" d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z"/></svg>');
+  }
+
+  .duckduckgo-icon {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23DE5833" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-.002 4.5c1.206 0 2.218.868 2.438 2.023h-4.88A2.44 2.44 0 0 1 12 4.5zm-4.5 4.5h9v1.5h-9V9zm0 3h9v1.5h-9V12zm0 3h9v1.5h-9V15zm-1.5 3.002c0-.828.672-1.5 1.5-1.5h9c.828 0 1.5.672 1.5 1.5v.498h-12v-.498z"/></svg>');
+  }
+
+  body.night .engine-options {
+    background: rgba(40, 40, 40, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  body.night .engine-option {
+    color: #eee;
+  }
+
+  body.night .engine-option:hover {
+    background: rgba(60, 60, 60, 0.9);
+  }
+
+  body.night .engine-option.active {
+    background: #4dabf7;
+  }
+</style>
 </head>
+
 <body>
   <div class="bg">
     <div class="bg-loading">正在加载Bing每日壁纸...</div>
@@ -663,7 +667,8 @@
   </div>
 
   <div class="powered-by">
-    Powered by <a href="https://www.bing.com" target="_blank">Bing</a> & <a href="https://github.com/Jiuhe29">Jiuhe29</a>
+    Powered by <a href="https://www.bing.com" target="_blank">Bing</a> & <a
+      href="https://github.com/Jiuhe29">Jiuhe29</a>
   </div>
 
   <div class="api-status">
@@ -685,7 +690,7 @@
       const apiStatusText = document.querySelector('.api-status span');
       const engineSwitcher = document.getElementById('engineSwitcher');
       const engineOptions = document.getElementById('engineOptions');
-      
+
       // 防抖计时器
       let debounceTimer;
       // API状态
@@ -724,10 +729,10 @@
       function loadBingWallpaper() {
         bgLoading.classList.add('visible');
         bgLoading.textContent = '正在加载Bing每日壁纸...';
-        
+
         // 尝试获取今天的壁纸
         const bingAPI = `https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN`;
-        
+
         // 使用代理解决跨域问题
         const proxyUrl = 'https://corsproxy.io/?';
         fetch(proxyUrl + encodeURIComponent(bingAPI))
@@ -741,17 +746,17 @@
               const imgUrl = `https://www.bing.com${image.url}`;
               const copyright = image.copyright;
               const copyrightLink = image.copyrightlink;
-              
+
               const img = new Image();
               img.onload = () => {
                 bg.style.backgroundImage = `url(${imgUrl})`;
                 bg.classList.add('visible');
-                
+
                 // 显示图片信息
                 if (copyright) {
                   bgInfo.innerHTML = `<a href="${copyrightLink}" target="_blank">${copyright}</a>`;
                 }
-                
+
                 setTimeout(() => {
                   bgLoading.classList.remove('visible');
                 }, 800);
@@ -769,11 +774,11 @@
             console.error('Error fetching Bing wallpaper:', error);
           });
       }
-      
+
       // 处理Bing壁纸加载错误
       function handleBingError() {
         bgLoading.textContent = 'Bing壁纸加载失败，使用默认背景';
-        
+
         // 使用默认背景
         const defaultUrls = [
           "https://images.unsplash.com/photo-1501854140801-50d01698950b",
@@ -781,10 +786,10 @@
           "https://images.unsplash.com/photo-1441974231531-c6227db极简搜索6e",
           "https://images.unsplash.com/photo-1426604966848-d7adac402bff"
         ];
-        
+
         const randomIndex = Math.floor(Math.random() * defaultUrls.length);
         const imgUrl = defaultUrls[randomIndex] + `?ixlib=rb-1.2.1&auto=format&fit=crop&w=${window.innerWidth}&h=${window.innerHeight}&q=80`;
-        
+
         const img = new Image();
         img.onload = () => {
           bg.style.backgroundImage = `url(${img.src})`;
@@ -1146,4 +1151,5 @@
     });
   </script>
 </body>
+
 </html>

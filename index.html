@@ -1,29 +1,630 @@
 <!DOCTYPE html>
-<html lang="zh-cn">
+<html lang="zh">
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>起始页</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="shortcut icon" href="https://img.rruu.net/image/5f8935117100e" type="image/x-icon">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>极简搜索 - 丝滑过渡效果优化</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      transition: all 0.8s cubic-bezier(0.2, 0.8, 0.4, 1.1);
+    }
+
+    html,
+    body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      color: #eee;
+      background: transparent;
+    }
+
+    .bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-size: cover;
+      background-position: center center;
+      background-color: #2a2a2a;
+      opacity: 0;
+      z-index: -2;
+      transition:
+        opacity 1.5s ease-in-out,
+        filter 0.8s cubic-bezier(0.4, 0, 0.2, 1.1),
+        transform 0.8s cubic-bezier(0.4, 0, 0.2, 1.1);
+      will-change: opacity, filter, transform;
+    }
+
+    .bg.visible {
+      opacity: 1;
+    }
+
+    .bg.blur {
+      filter: blur(8px) brightness(0.9);
+      transform: scale(1.05);
+    }
+
+    .bg-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.8) 100%);
+      z-index: -1;
+      transition: background 0.8s ease-in-out;
+    }
+
+    .bg-loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 18px;
+      font-weight: 300;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .bg-loading.visible {
+      opacity: 1;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 520px;
+      margin: 120px auto 0 auto;
+      position: relative;
+      z-index: 1;
+      padding: 0 20px;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1.1);
+    }
+
+    #time {
+      text-align: center;
+      font-size: 48px;
+      color: #fff;
+      margin-bottom: 24px;
+      user-select: none;
+      font-weight: 200;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      letter-spacing: 1px;
+      transition:
+        transform 0.6s cubic-bezier(0.4, 0, 0.2, 1.1),
+        opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1.1);
+    }
+
+    body.night #time {
+      color: #ddd;
+    }
+
+    .search-container {
+      position: relative;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1.1);
+    }
+
+    #search {
+      width: 100%;
+      padding: 16px 24px;
+      font-size: 18px;
+      border: none;
+      border-radius: 60px;
+      outline: none;
+      cursor: text;
+      background-color: rgba(255, 255, 255, 0.85);
+      color: #333;
+      font-weight: 400;
+      transition:
+        background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1.1),
+        color 0.5s cubic-bezier(0.4, 0, 0.2, 1.1),
+        padding 0.5s cubic-bezier(0.4, 0, 0.2, 1.1),
+        transform 0.6s cubic-bezier(0.4, 0, 0.2, 1.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      will-change: transform, background-color;
+    }
+
+    #search::placeholder {
+      color: #777;
+      font-weight: 300;
+      transition: color 0.4s ease;
+    }
+
+    #search.focused {
+      background-color: rgba(255, 255, 255, 0.95);
+      color: #000;
+      padding-left: 54px;
+      transform: scale(1.02);
+    }
+
+    /* 修复失焦时文字颜色问题 */
+    #search.not-focused {
+      background-color: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(6px);
+      box-shadow:
+        0 4px 16px rgba(31, 38, 135, 0.1),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+      color: #fff !important;
+      /* 强制白色文本 */
+      transform: scale(1);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 0;
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1.1);
+      color: #555;
+      font-size: 20px;
+      z-index: 5;
+      will-change: opacity;
+    }
+
+    #search.focused+.search-icon {
+      opacity: 1;
+      transform: translateY(-140%) scale(1.1);
+    }
+
+    .suggestions {
+      position: absolute;
+      top: 62px;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 12px 32px rgba(31, 38, 135, 0.3);
+      font-size: 16px;
+      z-index: 10;
+      display: none;
+      padding: 12px 0;
+      margin-top: 10px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      transition:
+        opacity 0.4s ease-out,
+        transform 0.4s cubic-bezier(0.4, 0, 0.2, 1.1);
+      opacity: 0;
+      overflow: hidden;
+      transform: translateY(-10px);
+    }
+
+    .suggestions.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .suggestions li {
+      padding: 12px 24px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1.1);
+      display: flex;
+      align-items: center;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .suggestions li:before {
+      content: "⌕";
+      margin-right: 12px;
+      font-size: 18px;
+      opacity: 0.6;
+      transition: transform 0.3s ease;
+    }
+
+    .suggestions li:hover {
+      background-color: #e6f0ff;
+      transform: scale(1.02);
+    }
+
+    .suggestions li:hover:before {
+      transform: scale(1.2);
+    }
+
+    body.night {
+      background-color: #121212;
+      color: #eee;
+    }
+
+    body.night .bg-overlay {
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.9) 100%);
+    }
+
+    body.night #search {
+      background-color: rgba(25, 25, 25, 0.3);
+      color: #fff;
+    }
+
+    body.night #search.focused {
+      background-color: rgba(45, 45, 45, 0.9);
+      color: #fff;
+    }
+
+    body.night #search::placeholder {
+      color: #999;
+    }
+
+    body.night .suggestions {
+      background: rgba(35, 35, 35, 0.95);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+      color: #ddd;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    body.night .suggestions li {
+      color: #ddd;
+    }
+
+    body.night .suggestions li:hover {
+      background-color: #3a3f55;
+    }
+
+    .shortcut-hint {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.6);
+      transition:
+        opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1.1),
+        transform 0.6s cubic-bezier(0.4, 0, 0.2, 1.1);
+    }
+
+    #search.focused~.shortcut-hint {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .blur-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      backdrop-filter: blur(0);
+      opacity: 0;
+      z-index: 0;
+      transition:
+        backdrop-filter 0.8s ease,
+        opacity 0.8s ease;
+    }
+
+    .blur-overlay.visible {
+      backdrop-filter: blur(10px);
+      opacity: 1;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        margin-top: 60px;
+      }
+
+      #time {
+        font-size: 36px;
+      }
+
+      #search {
+        padding: 14px 20px;
+      }
+
+      #search.focused {
+        padding-left: 48px;
+        transform: scale(1.01);
+      }
+
+      .search-icon {
+        left: 20px;
+      }
+    }
+
+
+    @keyframes float {
+      0% {
+        transform: translateY(0px);
+      }
+
+      50% {
+        transform: translateY(-10px);
+      }
+
+      100% {
+        transform: translateY(0px);
+      }
+    }
+
+    .floating-logo {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      color: rgba(255, 255, 255, 0.9);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      animation: float 4s ease-in-out infinite;
+      opacity: 0.8;
+      z-index: 10;
+    }
+
+    .floating-logo span {
+      color: #4dabf7;
+    }
+
+    .powered-by {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.5);
+      text-align: right;
+      z-index: 10;
+    }
+
+    .powered-by a {
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .powered-by a:hover {
+      color: #4dabf7;
+      text-decoration: underline;
+    }
+  </style>
 </head>
-<style>
-</style>
 
 <body>
-    <div align="center" class="bj"></div>
-    <div id="container">
-        <div class="block" align="center">
-            <a class="qc">清除</a>
-            <input class="srdj" id="search" type=text size=30 placeholder="旧&nbsp;鹤&nbsp;亦&nbsp;南&nbsp;归">
-        </div>
+  <div class="bg">
+    <div class="bg-loading">正在加载背景...</div>
+  </div>
+  <div class="bg-overlay"></div>
+  <div class="blur-overlay"></div>
+
+  <div class="floating-logo">极简<span>搜索</span></div>
+
+  <div class="container">
+    <div id="time">00:00:00</div>
+    <div class="search-container">
+      <input type="text" id="search" placeholder="输入关键词或 !g !b 快捷搜索..." autocomplete="off" />
+      <div class="search-icon">⌕</div>
+      <ul class="suggestions"></ul>
+      <div class="shortcut-hint">F9 切换夜间模式</div>
     </div>
-    <div class="cover">
-    </div>
+  </div>
+
+  <div class="powered-by">
+    Powered by <a href="#">Unsplash API</a> & <a href="#">极简技术</a>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const bg = document.querySelector('.bg');
+      const bgLoading = document.querySelector('.bg-loading');
+      const search = document.getElementById('search');
+      const suggestions = document.querySelector('.suggestions');
+      const timeEl = document.getElementById('time');
+      const blurOverlay = document.querySelector('.blur-overlay');
+      const container = document.querySelector('.container');
+
+      // 更丰富的背景图片API
+      const bgImageUrls = [
+        "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05",
+        "https://images.unsplash.com/photo-1501854140801-50d01698950b",
+      ];
+
+      let bgIndex = 0;
+
+      // 更新背景图片
+      function setBackground() {
+        bgLoading.classList.add('visible');
+        bgLoading.textContent = '正在加载背景...';
+
+        const imgUrl = bgImageUrls[bgIndex] + `?ixlib=rb-1.2.1&auto=format&fit=crop&w=${window.innerWidth}&h=${window.innerHeight}&q=80`;
+        const img = new Image();
+        img.onload = () => {
+          bg.style.backgroundImage = `url(${img.src})`;
+          bg.classList.add('visible');
+          setTimeout(() => {
+            bgLoading.classList.remove('visible');
+          }, 800);
+        };
+        img.onerror = () => {
+          bgLoading.textContent = '背景加载失败，使用默认背景';
+          setTimeout(() => {
+            bgLoading.classList.remove('visible');
+          }, 2000);
+        };
+        img.src = imgUrl;
+
+        // 更新索引准备下一张
+        bgIndex = (bgIndex + 1) % bgImageUrls.length;
+      }
+
+      // 时间更新函数
+      function updateTime() {
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        timeEl.textContent = `${hours}:${minutes}:${seconds}`;
+
+        // 根据时间自动切换夜间模式
+        const hour = now.getHours();
+        const isNight = hour < 6 || hour >= 18;
+        if (isNight && !document.body.classList.contains('night')) {
+          document.body.classList.add('night');
+          localStorage.setItem('nightMode', 'on');
+        } else if (!isNight && document.body.classList.contains('night')) {
+          document.body.classList.remove('night');
+          localStorage.setItem('nightMode', 'off');
+        }
+      }
+
+      // 切换模糊效果
+      function toggleBlur(state) {
+        if (state) {
+          bg.classList.add('blur');
+          blurOverlay.classList.add('visible');
+          search.classList.add('focused');
+          search.classList.remove('not-focused');
+
+          // 容器微动画
+          container.style.transform = 'translateY(-15px)';
+          setTimeout(() => {
+            container.style.transform = 'translateY(0)';
+          }, 100);
+        } else {
+          bg.classList.remove('blur');
+          blurOverlay.classList.remove('visible');
+          search.classList.remove('focused');
+          search.classList.add('not-focused');
+          container.style.transform = 'none';
+
+          // 隐藏建议框时添加淡出动画
+          suggestions.classList.add('visible');
+          setTimeout(() => {
+            suggestions.style.display = 'none';
+            suggestions.classList.remove('visible');
+          }, 300);
+        }
+      }
+
+      // 获取搜索建议
+      function getSuggestions(query) {
+        if (!query.trim()) {
+          suggestions.classList.add('visible');
+          setTimeout(() => {
+            suggestions.style.display = 'none';
+            suggestions.classList.remove('visible');
+          }, 300);
+          return;
+        }
+
+        // 模拟建议数据
+        const sampleSuggestions = [
+          `${query}的意思`,
+          `${query}是什么`,
+          `${query}图片`,
+          `${query}大全`,
+          `${query}百科`,
+          `${query}官网`,
+          `${query}翻译`,
+          `${query}教程`,
+          `${query}使用方法`
+        ];
+
+        // 创建建议项
+        suggestions.innerHTML = '';
+        sampleSuggestions.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = item;
+          li.addEventListener('click', () => {
+            search.value = item;
+            performSearch(item);
+          });
+          suggestions.appendChild(li);
+        });
+
+        suggestions.style.display = 'block';
+        setTimeout(() => {
+          suggestions.classList.add('visible');
+        }, 10);
+      }
+
+      // 执行搜索
+      function performSearch(query) {
+        if (!query) return;
+
+        let url;
+        if (query.startsWith("!g ")) {
+          const keyword = query.substring(3);
+          url = `https://www.google.com/search?q=${encodeURIComponent(keyword)}`;
+        } else if (query.startsWith("!b ")) {
+          const keyword = query.substring(3);
+          url = `https://www.bing.com/search?q=${encodeURIComponent(keyword)}`;
+        } else {
+          url = `https://www.baidu.com/s?wd=${encodeURIComponent(query)}`;
+        }
+
+        // 添加搜索效果
+        search.style.transform = 'scale(0.98)';
+        bg.style.transform = 'scale(1.08)';
+        setTimeout(() => {
+          window.open(url, "_blank");
+          search.value = '';
+          toggleBlur(false);
+          search.style.transform = '';
+          bg.style.transform = '';
+        }, 300);
+      }
+
+      // 初始化页面
+      setBackground();
+      updateTime();
+      setInterval(updateTime, 1000);
+      search.focus();
+      setTimeout(() => toggleBlur(true), 100);
+
+      // 每2分钟更换一次背景
+      setInterval(setBackground, 2 * 60 * 1000);
+
+      // 事件监听器
+      search.addEventListener('focus', () => toggleBlur(true));
+
+      document.addEventListener('click', (e) => {
+        if (!search.contains(e.target) && !suggestions.contains(e.target)) {
+          toggleBlur(false);
+        }
+      });
+
+      search.addEventListener('input', function () {
+        getSuggestions(this.value.trim());
+      });
+
+      search.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+          performSearch(this.value.trim());
+        }
+      });
+
+      // 夜间模式快捷键
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'F9') {
+          document.body.classList.toggle('night');
+          // 保存到本地存储
+          const isNightMode = document.body.classList.contains('night');
+          localStorage.setItem('nightMode', isNightMode ? 'on' : 'off');
+        }
+      });
+
+      // 从本地存储加载夜间模式状态
+      if (localStorage.getItem('nightMode') === 'on') {
+        document.body.classList.add('night');
+      }
+
+      // 添加美观的初始进入效果
+      setTimeout(() => {
+        timeEl.style.opacity = '1';
+        timeEl.style.transform = 'translateY(0)';
+        container.style.opacity = '1';
+        container.style.transform = 'translateY(0)';
+      }, 300);
+
+      // 添加键盘快捷键提示
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          toggleBlur(false);
+          search.blur();
+        }
+      });
+    });
+  </script>
 </body>
-<script src="js/jquery-1.11.0.min.js"></script>
-<script src="js/main.js"></script>
 
 </html>

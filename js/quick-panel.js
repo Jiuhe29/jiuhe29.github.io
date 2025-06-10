@@ -494,24 +494,11 @@ async function loadDefaultIcon(img, url) {
     try {
         const urlObj = new URL(url);
         const iconSources = [
-            `${urlObj.origin}/favicon.ico`,
             `https://icons.duckduckgo.com/ip3/${urlObj.hostname}.ico`,
+            `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`,
+            `https://api.faviconkit.com/${urlObj.hostname}/32`,
             './favicon.ico'
         ];
-
-        // 尝试从页面中获取图标链接
-        try {
-            const response = await fetch(url);
-            const html = await response.text();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const iconLink = doc.querySelector('link[rel="icon"], link[rel="shortcut icon"]');
-            if (iconLink?.href) {
-                iconSources.unshift(iconLink.href);
-            }
-        } catch (error) {
-            console.warn('Failed to fetch icon from page:', error);
-        }
 
         // 依次尝试加载图标
         img.onerror = async function() {

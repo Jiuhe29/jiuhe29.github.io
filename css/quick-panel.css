@@ -1,0 +1,438 @@
+.quick-sites-panel {
+    position: fixed;
+    bottom: -100%;
+    left: 0;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(25px) saturate(1.8);
+    -webkit-backdrop-filter: blur(25px) saturate(1.8);
+    padding: 30px 0;
+    z-index: 99;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.1);
+    transform: translateY(100%);
+}
+
+.quick-sites-panel.show {
+    bottom: 0;
+    transform: translateY(0);
+}
+
+.quick-sites-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 24px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+}
+
+.site-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: white;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.9;
+    padding: 16px;
+    border-radius: 16px;
+    position: relative;
+    background: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.site-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.site-item:hover::before {
+    opacity: 1;
+}
+
+.site-item:hover {
+    transform: translateY(-8px);
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.site-item img {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    border-radius: 14px;
+    margin-bottom: 12px;
+    background: white;
+    padding: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+}
+
+.site-item:hover img {
+    transform: scale(1.08);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.site-item span {
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.95);
+    transition: color 0.3s ease;
+    margin-top: 4px;
+}
+
+.site-item:hover span {
+    color: white;
+}
+
+.delete-btn,
+.edit-btn {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: none;
+    background: rgba(0, 0, 0, 0.3);
+    color: white;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+.delete-btn {
+    top: 8px;
+    right: 8px;
+}
+
+.edit-btn {
+    top: 8px;
+    right: 40px;
+}
+
+.site-item:hover .delete-btn,
+.site-item:hover .edit-btn {
+    opacity: 0.8;
+    transform: scale(1);
+}
+
+.delete-btn:hover,
+.edit-btn:hover {
+    opacity: 1 !important;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.delete-btn:hover {
+    background: rgba(244, 67, 54, 0.8);
+}
+
+.edit-btn:hover {
+    background: rgba(33, 150, 243, 0.8);
+}
+
+/* 添加按钮样式 */
+.add-site-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 120px;
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
+    background: transparent;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.7;
+}
+
+.add-site-btn:hover {
+    opacity: 1;
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-4px);
+}
+
+.add-site-btn svg {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 8px;
+    opacity: 0.8;
+}
+
+/* 表单样式 */
+.add-site-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background: rgba(30, 30, 30, 0.95);
+    backdrop-filter: blur(16px);
+    border-radius: 20px;
+    padding: 32px;
+    width: 90%;
+    max-width: 400px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 100;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.add-site-dialog.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.add-site-dialog h2 {
+    margin: 0 0 24px;
+    color: white;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.form-group input.error {
+    border-color: rgba(244, 67, 54, 0.5);
+}
+
+.error-message {
+    color: rgb(244, 67, 54);
+    font-size: 12px;
+    margin-top: 8px;
+    opacity: 0;
+    transform: translateY(-8px);
+    animation: showError 0.3s ease forwards;
+}
+
+@keyframes showError {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dialog-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+}
+
+.dialog-buttons button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button[type="submit"] {
+    background: rgb(33, 150, 243);
+    color: white;
+}
+
+button[type="submit"]:hover {
+    background: rgb(25, 118, 210);
+}
+
+button[type="button"] {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+button[type="button"]:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* 删除确认对话框样式 */
+.delete-confirm-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.delete-confirm-dialog.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.delete-confirm-dialog .dialog-content {
+    background: rgba(30, 30, 30, 0.95);
+    backdrop-filter: blur(16px);
+    padding: 24px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 320px;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.delete-confirm-dialog.show .dialog-content {
+    transform: scale(1);
+}
+
+.delete-confirm-dialog h3 {
+    color: white;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.delete-confirm-dialog p {
+    color: rgba(255, 255, 255, 0.8);
+    margin: 16px 0 24px;
+    font-size: 14px;
+}
+
+.delete-confirm-dialog .buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.delete-confirm-dialog button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.delete-confirm-dialog .cancel {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.delete-confirm-dialog .cancel:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.delete-confirm-dialog .danger {
+    background: rgb(244, 67, 54);
+    color: white;
+}
+
+.delete-confirm-dialog .danger:hover {
+    background: rgb(211, 47, 47);
+}
+
+/* 夜间模式下的样式调整 */
+body.night-mode .quick-sites-panel {
+    background: rgba(30, 30, 30, 0.4);
+}
+
+body.night-mode .delete-btn {
+    background: rgba(50, 50, 50, 0.4);
+}
+
+body.night-mode .delete-btn:hover {
+    background: rgba(200, 50, 50, 0.8);
+}
+
+/* 夜间模式样式适配 */
+body.night-mode .delete-confirm-dialog .dialog-content {
+    background: rgba(20, 20, 20, 0.95);
+}
+
+/* 小屏幕调整 */
+@media (max-width: 768px) {
+    .quick-sites-grid {
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+        gap: 15px;
+        padding: 0 20px;
+    }
+    
+    .site-item img {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .site-item span {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .quick-sites-grid {
+        grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+        gap: 12px;
+        padding: 0 15px;
+    }
+    
+    .site-item img {
+        width: 44px;
+        height: 44px;
+        padding: 6px;
+    }
+    
+    .add-site-dialog {
+        padding: 24px;
+    }
+    
+    .dialog-buttons button {
+        padding: 10px;
+    }
+}

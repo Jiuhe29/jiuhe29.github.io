@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="简搜 - 一个简洁的搜索引擎，提供多种搜索引擎选择，支持夜间模式和实时壁纸。">
+  <title>简 搜</title>
+  <link rel="stylesheet" href="./css/styles.css">
+  <link rel="stylesheet" href="./css/quick-panel.css">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="msapplication-TileImage" content="mstile-150x150.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+</head>
+
+<body>
+  <div class="bg">
+    <div class="bg-loading">正在加载Bing每日壁纸...</div>
+  </div>
+  <div class="bg-overlay"></div>
+  <div class="bg-info"></div>
+  <div class="blur-overlay"></div>
+
+  <div class="floating-logo">简<span>搜</span></div>
+
+  <div class="container">
+    <div id="time">00:00:00</div>
+    <div class="search-container">
+      <input type="text" id="search" placeholder="输入关键词搜索..." autocomplete="off" />
+      <div class="search-icon">⌕</div>
+      <div class="engine-switcher" id="engineSwitcher">
+        <span>Bing</span>
+      </div>
+      <div class="engine-options" id="engineOptions">
+        <div class="engine-option" data-engine="baidu">
+          <div class="engine-icon baidu-icon"></div>
+          <span>百度</span>
+        </div>
+        <div class="engine-option active" data-engine="bing">
+          <div class="engine-icon bing-icon"></div>
+          <span>Bing</span>
+        </div>
+        <div class="engine-option" data-engine="google">
+          <div class="engine-icon google-icon"></div>
+          <span>Google</span>
+        </div>
+        <div class="engine-option" data-engine="duckduckgo">
+          <div class="engine-icon duckduckgo-icon"></div>
+          <span>DuckDuckGo</span>
+        </div>
+      </div>
+      <ul class="suggestions"></ul>
+    </div>
+    <div class="shortcut-hint">F9 切换夜间模式 | Esc 退出搜索</div>
+  </div>
+
+  <div class="powered-by">
+    Powered by <a href="https://www.bing.com" target="_blank">Bing</a> & <a
+      href="https://github.com/Jiuhe29">Jiuhe29</a>
+  </div>
+  <div class="api-status">
+    <div class="status-indicator"></div>
+    <span>API 状态: 在线</span>
+  </div>
+  <!-- 快捷网站面板 -->
+  <div class="quick-sites-panel" id="quickSitesPanel">
+    <div class="quick-sites-grid">
+      <button class="site-item add-site-btn" id="addSiteBtn">
+        <div class="add-icon">+</div>
+        <span>添加网站</span>
+      </button>
+    </div>
+  </div>
+  <!-- 添加/编辑网站弹窗 -->
+  <div class="add-site-dialog" id="addSiteForm">
+    <h3 id="dialogTitle">添加快捷网站</h3>
+    <form>
+      <input type="text" id="siteName" placeholder="网站名称" required>
+      <input type="text" id="siteUrl" placeholder="网站地址 (不需要输入https://)" required>
+      <input type="url" id="siteIcon" placeholder="图标地址 (可选)">
+      <div class="buttons">
+        <button type="button" class="cancel" id="cancelAdd">取消</button>
+        <button type="submit" class="submit">确定</button>
+      </div>
+    </form>
+  </div>
+  
+  <!-- 删除确认对话框 -->
+  <div class="delete-confirm-dialog" id="deleteConfirmDialog">
+    <div class="dialog-content">
+      <h3>删除确认</h3>
+      <p>确定要删除这个快捷网站吗？</p>
+      <div class="buttons">
+        <button type="button" class="cancel" id="cancelDelete">取消</button>
+        <button type="button" class="danger" id="confirmDelete">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/script.js"></script>
+  <script src="./js/quick-panel.js"></script>
+</body>
+
+</html>

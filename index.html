@@ -4,105 +4,196 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="简搜 - 一个简洁的搜索引擎，提供多种搜索引擎选择，支持夜间模式和实时壁纸。">
-  <title>简 搜</title>
-  <link rel="stylesheet" href="./css/styles.css">
-  <link rel="stylesheet" href="./css/quick-panel.css">
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <meta name="theme-color" content="#ffffff">
-  <meta name="msapplication-TileColor" content="#ffffff">
-  <meta name="msapplication-TileImage" content="mstile-150x150.png">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>简搜</title>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.3/cdn.min.js"></script>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body>
-  <div class="bg">
-    <div class="bg-loading">正在加载Bing每日壁纸...</div>
+<body x-data="searchApp()" x-init="init()" :class="{ 'night': nightMode }">
+  <!-- 背景相关 -->
+  <div class="bg" :class="{ 'blur': searchFocused, 'visible': !bgLoading }" :style="bgImage ? `background-image: url(${bgImage})` : ''"></div>
+  <div class="bg-loading" :class="{ 'visible': bgLoading }">
+    <div class="loading-spinner"></div>
+    <span x-text="bgLoading ? '正在加载背景...' : ''"></span>
   </div>
   <div class="bg-overlay"></div>
-  <div class="bg-info"></div>
-  <div class="blur-overlay"></div>
+  <div class="bg-info" x-html="bgInfo"></div>
+  <div class="blur-overlay" :class="{ 'visible': searchFocused }"></div>
 
+  <!-- 浮动Logo -->
   <div class="floating-logo">简<span>搜</span></div>
 
+  <!-- 主容器 -->
   <div class="container">
-    <div id="time">00:00:00</div>
+    <div id="time" x-text="currentTime"></div>
+    
+    <!-- 搜索容器 -->
     <div class="search-container">
-      <input type="text" id="search" placeholder="输入关键词搜索..." autocomplete="off" />
+      <input type="text" 
+             id="search" 
+             :placeholder="`在${engines[currentEngine].name}中搜索...`" 
+             autocomplete="off"
+             x-model="searchQuery" 
+             x-on:focus="toggleBlur(true)" 
+             x-on:input="handleSearchInput"
+             x-on:keypress="handleKeypress" 
+             :class="{ 'focused': searchFocused, 'not-focused': !searchFocused }" />
+      
       <div class="search-icon">⌕</div>
-      <div class="engine-switcher" id="engineSwitcher">
-        <span>Bing</span>
+      
+      <!-- 搜索引擎切换器 -->
+      <div class="engine-switcher" x-on:click="toggleEngineOptions" x-text="engines[currentEngine].name"></div>
+      
+      <!-- 搜索引擎选项 -->
+      <div class="engine-options" :class="{ 'visible': engineOptionsVisible }">
+        <template x-for="(engine, key) in engines" :key="key">
+          <div class="engine-option" 
+               :class="{ 'active': currentEngine === key }" 
+               x-on:click="switchEngine(key)"
+               :data-engine="key">
+            <div class="engine-icon" :class="`${key}-icon`"></div>
+            <span x-text="engine.name"></span>
+          </div>
+        </template>
       </div>
-      <div class="engine-options" id="engineOptions">
-        <div class="engine-option" data-engine="baidu">
-          <div class="engine-icon baidu-icon"></div>
-          <span>百度</span>
-        </div>
-        <div class="engine-option active" data-engine="bing">
-          <div class="engine-icon bing-icon"></div>
-          <span>Bing</span>
-        </div>
-        <div class="engine-option" data-engine="google">
-          <div class="engine-icon google-icon"></div>
-          <span>Google</span>
-        </div>
-        <div class="engine-option" data-engine="duckduckgo">
-          <div class="engine-icon duckduckgo-icon"></div>
-          <span>DuckDuckGo</span>
-        </div>
-      </div>
-      <ul class="suggestions"></ul>
+      
+      <!-- 搜索建议 -->
+      <ul class="suggestions" :class="{ 'visible': suggestions.length > 0 && searchFocused }">
+        <template x-if="isLoadingSuggestions">
+          <li class="loading">
+            <div class="loading-spinner"></div> 正在获取建议...
+          </li>
+        </template>
+        <template x-if="!isLoadingSuggestions && suggestions.length > 0">
+          <template x-for="suggestion in suggestions" :key="suggestion">
+            <li x-text="suggestion" x-on:click="performSearch()"></li>
+          </template>
+        </template>
+        <template x-if="!isLoadingSuggestions && suggestions.length === 0 && searchQuery.trim()">
+          <li class="error">无相关建议</li>
+        </template>
+      </ul>
     </div>
+    
+    <!-- 快捷提示 -->
     <div class="shortcut-hint">F9 切换夜间模式 | Esc 退出搜索</div>
   </div>
 
+  <!-- 页脚信息 -->
   <div class="powered-by">
-    Powered by <a href="https://www.bing.com" target="_blank">Bing</a> & <a
-      href="https://jiuhe29.github.io/i">Jiuhe29</a>
+    Powered by <a href="https://www.bing.com" target="_blank">Bing</a> & <a href="https://github.com/Jiuhe29">Jiuhe29</a>
   </div>
+
+  <!-- API状态指示器 -->
   <div class="api-status">
-    <div class="status-indicator"></div>
-    <span>API 状态: 在线</span>
+    <div class="status-indicator" :class="{ 'offline': !apiOnline }"></div>
+    <span x-text="`API 状态: ${apiOnline ? '在线' : '离线'}`"></span>
   </div>
+
   <!-- 快捷网站面板 -->
-  <div class="quick-sites-panel" id="quickSitesPanel">
+  <div class="quick-sites-panel" :class="{ 'show': quickLayoutVisible }">
     <div class="quick-sites-grid">
-      <button class="site-item add-site-btn" id="addSiteBtn">
-        <div class="add-icon">+</div>
+      <template x-for="(site, index) in customSites" :key="`${site.url}-${index}`">
+        <a :href="site.url" 
+           class="site-item" 
+           target="_blank" 
+           :data-name="site.name" 
+           :data-url="site.url"
+           :data-icon="site.icon"
+           x-on:mouseenter="hoveredSite = site.url"
+           x-on:mouseleave="hoveredSite = ''">
+          <img :src="site.icon || getDefaultIcon(site.url)" 
+               :alt="site.name" 
+               class="site-icon"
+               x-on:error="handleIconError($event, site.url)">
+          <span x-text="site.name"></span>
+          
+          <!-- 删除按钮 -->
+          <button class="delete-btn" 
+                  x-on:click.prevent="openDeleteDialog(site.url)" 
+                  title="删除网站">
+            <svg viewBox="0 0 24 24" width="12" height="12">
+              <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+          </button>
+          
+          <!-- 编辑按钮 -->
+          <button class="edit-btn" 
+                  x-on:click.prevent="openAddSiteForm(site)" 
+                  title="编辑网站">
+            <svg viewBox="0 0 24 24" width="12" height="12">
+              <path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+            </svg>
+          </button>
+        </a>
+      </template>
+
+      <!-- 添加网站按钮 -->
+      <button class="site-item add-site-btn" x-on:click="openAddSiteForm()">
+        <div class="add-icon">
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+        </div>
         <span>添加网站</span>
       </button>
     </div>
   </div>
+
   <!-- 添加/编辑网站弹窗 -->
-  <div class="add-site-dialog" id="addSiteForm">
-    <h3 id="dialogTitle">添加快捷网站</h3>
-    <form>
-      <input type="text" id="siteName" placeholder="网站名称" required>
-      <input type="text" id="siteUrl" placeholder="网站地址 (不需要输入https://)" required>
-      <input type="url" id="siteIcon" placeholder="图标地址 (可选)">
-      <div class="buttons">
-        <button type="button" class="cancel" id="cancelAdd">取消</button>
-        <button type="submit" class="submit">确定</button>
-      </div>
-    </form>
+  <div class="add-site-dialog" :class="{ 'show': isFormOpen }" x-show="isFormOpen">
+    <div class="dialog-overlay" x-on:click="closeAddSiteForm()"></div>
+    <div class="dialog-content">
+      <h3 x-text="isEditing ? '编辑快捷网站' : '添加快捷网站'"></h3>
+      
+      <form x-on:submit.prevent="addEditSite()">
+        <div class="form-group">
+          <label>网站名称</label>
+          <input type="text" 
+                 x-ref="siteName"
+                 placeholder="请输入网站名称" 
+                 required 
+                 maxlength="20">
+        </div>
+
+        <div class="form-group">
+          <label>网站地址</label>
+          <input type="text" 
+                 x-ref="siteUrl"
+                 placeholder="例如: www.example.com (不需要输入https://)" 
+                 required>
+        </div>
+
+        <div class="form-group">
+          <label>图标地址 (可选)</label>
+          <input type="url" 
+                 x-ref="siteIcon"
+                 placeholder="图标URL地址">
+        </div>
+
+        <div class="dialog-buttons">
+          <button type="button" x-on:click="closeAddSiteForm()">取消</button>
+          <button type="submit">确定</button>
+        </div>
+      </form>
+    </div>
   </div>
-  
+
   <!-- 删除确认对话框 -->
-  <div class="delete-confirm-dialog" id="deleteConfirmDialog">
+  <div class="delete-confirm-dialog" :class="{ 'show': deleteDialogVisible }" x-show="deleteDialogVisible">
+    <div class="dialog-overlay" x-on:click="deleteDialogVisible = false"></div>
     <div class="dialog-content">
       <h3>删除确认</h3>
-      <p>确定要删除这个快捷网站吗？</p>
-      <div class="buttons">
-        <button type="button" class="cancel" id="cancelDelete">取消</button>
-        <button type="button" class="danger" id="confirmDelete">删除</button>
+      <p>确定要删除这个快捷网站吗？此操作无法撤销。</p>
+      <div class="dialog-buttons">
+        <button type="button" class="cancel" x-on:click="deleteDialogVisible = false">取消</button>
+        <button type="button" class="danger" x-on:click="confirmDelete()">删除</button>
       </div>
     </div>
   </div>
 
-  <script src="./js/script.js"></script>
-  <script src="./js/quick-panel.js"></script>
+  <!-- 引入JavaScript文件 -->
+  <script src="js/script.js"></script>
 </body>
 
 </html>

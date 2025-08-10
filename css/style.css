@@ -1,0 +1,1242 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.4, 1.1);
+  user-select: none;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  color: #797979;
+  background: transparent;
+}
+
+.bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-size: cover;
+  background-position: center center;
+  background-color: #2a2a2a;
+  opacity: 0;
+  z-index: -2;
+  transition: opacity 1.5s ease-in-out, filter 0.4s cubic-bezier(0.4, 0, 0.2, 1.1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1.1);
+  will-change: opacity, filter, transform;
+}
+
+.bg.visible {
+  opacity: 1;
+}
+
+.bg.blur {
+  filter: blur(8px) brightness(0.9);
+  transform: scale(1.05);
+}
+
+.bg-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.8) 100%);
+  z-index: -1;
+  transition: background 0.8s ease-in-out;
+}
+
+.bg-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 18px;
+  font-weight: 300;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.bg-loading.visible {
+  opacity: 1;
+}
+
+/* 优化后的背景信息样式 */
+.bg-info {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 8px 16px;
+  border-radius: 20px;
+  backdrop-filter: blur(5px);
+  max-width: 80%;
+  z-index: 10;
+  transition: all 0.4s ease;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bg-info a {
+  color: rgba(255, 255, 255, 0.95);
+  text-decoration: none;
+  border-bottom: 1px dotted rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+}
+
+.bg-info a:hover {
+  color: #4dabf7;
+  border-bottom: 1px solid #4dabf7;
+}
+
+.container {
+  width: 100%;
+  max-width: 520px;
+  margin: 120px auto 0 auto;
+  position: relative;
+  z-index: 1;
+  padding: 0 20px;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1.1);
+}
+
+#time {
+  text-align: center;
+  font-size: 48px;
+  color: #fff;
+  margin-bottom: 24px;
+  user-select: none;
+  font-weight: 200;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  letter-spacing: 1px;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1.1), opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1.1);
+}
+
+body.night #time {
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+.search-container {
+  position: relative;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1.1);
+}
+
+#search {
+  width: 100%;
+  padding: 16px 54px 16px 54px;
+  font-size: 18px;
+  border: none;
+  border-radius: 60px;
+  outline: none;
+  cursor: text;
+  background-color: rgba(255, 255, 255, 0.85);
+  color: #333;
+  font-weight: 400;
+  transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1.1), color 0.5s cubic-bezier(0.4, 0, 0.2, 1.1), padding 0.5s cubic-bezier(0.4, 0, 0.2, 1.1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1.1), border-color 0.3s ease;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  will-change: transform, background-color;
+}
+
+#search::placeholder {
+  color: #777;
+  font-weight: 300;
+  transition: color 0.4s ease;
+}
+
+#search.focused {
+  background-color: rgba(255, 255, 255, 0.95);
+  color: #000;
+  transform: scale(1.02);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+#search.not-focused {
+  background-color: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(6px);
+  color: #fff !important;
+  transform: scale(1);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.search-icon {
+  position: absolute;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1.1);
+  color: #c3c3c3;
+  font-size: 20px;
+  z-index: 5;
+  will-change: opacity;
+}
+
+#search.focused+.search-icon {
+  opacity: 1;
+  transform: translateY(-60%);
+}
+
+.engine-switcher {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 24px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 5;
+}
+
+.engine-switcher:hover {
+  transform: translateY(-50%) scale(1.05);
+}
+
+.engine-switcher span {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-right: 8px;
+}
+
+.engine-switcher::after {
+  content: "▼";
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+body.night .engine-switcher {
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.night .engine-switcher span {
+  color: #eee;
+}
+
+.suggestions {
+  position: absolute;
+  top: 62px;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(31, 38, 135, 0.3);
+  font-size: 16px;
+  z-index: 10;
+  display: none;
+  padding: 12px 0;
+  margin-top: 10px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: opacity 0.4s ease-out, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1.1);
+  opacity: 0;
+  overflow: hidden;
+  overflow-y: auto;
+  max-height: 65vh;
+  transform: translateY(-10px);
+}
+
+.suggestions.visible {
+  display: block;    /* ← 关键 */
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
+.suggestions li {
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1.1);
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  color: #333;
+}
+
+.suggestions li:before {
+  content: "⌕";
+  margin-right: 12px;
+  font-size: 18px;
+  opacity: 0.6;
+  transition: transform 0.3s ease;
+}
+
+.suggestions li:hover {
+  background-color: #e6f0ff;
+  transform: scale(1.02);
+}
+
+.suggestions li:hover:before {
+  transform: scale(1.2);
+}
+
+.suggestions li.loading {
+  justify-content: center;
+  pointer-events: none;
+}
+
+.suggestions li.loading:before {
+  content: "";
+  display: none;
+}
+
+.suggestions li.error {
+  color: #ff6b6b;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.suggestions li.error:before {
+  content: "⚠";
+  display: inline;
+}
+
+/* 夜间模式全局样式 */
+body.night {
+  background-color: #121212;
+  color: #eee;
+}
+
+body.night .bg-overlay {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.95) 100%);
+}
+
+/* 夜间模式搜索框样式 */
+body.night #search {
+  background-color: rgba(30, 30, 30, 0.8);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+body.night #search.focused {
+  background-color: rgba(50, 50, 50, 0.95);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+body.night #search::placeholder {
+  color: #aaa;
+}
+
+body.night #search.not-focused {
+  background-color: rgba(30, 30, 30, 0.6);
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 夜间模式建议框样式 */
+body.night .suggestions {
+  background: rgba(40, 40, 40, 0.98);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  color: #eee;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+body.night .suggestions li {
+  color: #eee;
+}
+
+body.night .suggestions li:hover {
+  background-color: rgba(60, 60, 60, 0.9);
+}
+
+body.night .suggestions li:before {
+  color: #aaa;
+}
+
+.shortcut-hint {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1.1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1.1);
+}
+
+body.night .shortcut-hint {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+#search.focused~.shortcut-hint {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.blur-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  backdrop-filter: blur(0);
+  background-color: rgba(0, 0, 0, 0);
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+  transition: all 0.8s ease;
+}
+
+.blur-overlay.visible {
+  backdrop-filter: blur(10px);
+  background-color: rgba(0, 0, 0, 0.2);
+  opacity: 1;
+}
+
+@media (max-width: 480px) {
+  .container {
+    margin-top: 60px;
+  }
+
+  #time {
+    font-size: 36px;
+  }
+
+  #search {
+    padding: 14px 50px 14px 50px;
+  }
+
+  #search.focused {
+    transform: scale(1.01);
+  }
+
+  .search-icon {
+    left: 20px;
+  }
+
+  .engine-switcher {
+    right: 20px;
+    padding: 0 8px;
+  }
+
+  .engine-switcher span {
+    font-size: 12px;
+  }
+
+  .bg-info {
+    bottom: 60px;
+    left: 10px;
+    right: 10px;
+    max-width: 100%;
+    font-size: 11px;
+    padding: 6px 10px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+.floating-logo {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-size: 24px;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  opacity: 0.8;
+  z-index: 10;
+}
+
+body.night .floating-logo {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.floating-logo span {
+  color: #4dabf7;
+}
+
+.powered-by {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: right;
+  z-index: 10;
+}
+
+body.night .powered-by {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.powered-by a {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+body.night .powered-by a {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.powered-by a:hover {
+  color: #4dabf7;
+  text-decoration: underline;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #4dabf7;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 10px;
+}
+
+body.night .loading-spinner {
+  border-top-color: #4dabf7;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.api-status {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
+  background-color: #4CAF50;
+  box-shadow: 0 0 8px #4CAF50;
+}
+
+.status-indicator.offline {
+  background-color: #f44336;
+  box-shadow: 0 0 8px #f44336;
+}
+
+.engine-options {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 8px 0;
+  min-width: 120px;
+  display: none;
+  z-index: 20;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transform: translateY(10px);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.engine-options.visible {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.engine-option {
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  color: #333;
+  display: flex;
+  align-items: center;
+}
+
+.engine-option:hover {
+  background: #e6f0ff;
+}
+
+.engine-option.active {
+  background: #4dabf7;
+  color: white;
+}
+
+.engine-option.active:hover {
+  background: #3a8fd4;
+}
+
+.engine-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+body.night .engine-options {
+  background: rgba(40, 40, 40, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+body.night .engine-option {
+  color: #eee;
+}
+
+body.night .engine-option:hover {
+  background: rgba(60, 60, 60, 0.9);
+}
+
+body.night .engine-option.active {
+  background: #4dabf7;
+}
+
+/* 添加网站按钮样式 */
+.add-site-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  transition: all 0.3s;
+}
+
+.add-site-btn .add-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-bottom: 8px;
+  transition: all 0.3s;
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+}
+
+.add-site-btn:hover .add-icon {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.05);
+}
+
+/* 添加网站弹窗样式 */
+.add-site-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 25px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  display: none;
+  z-index: 1000;
+}
+
+.add-site-dialog.show {
+  display: block;
+  animation: dialogShow 0.3s ease-out;
+}
+
+@keyframes dialogShow {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.add-site-dialog h3 {
+  margin: 0 0 20px;
+  color: white;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.add-site-dialog input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.add-site-dialog input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.add-site-dialog input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.add-site-dialog .buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.add-site-dialog button {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.add-site-dialog .cancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.add-site-dialog .submit {
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+}
+
+.add-site-dialog .cancel:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.add-site-dialog .submit:hover {
+  background: white;
+  transform: translateY(-1px);
+}
+
+/* 夜间模式适配 */
+.night-mode .add-site-dialog {
+  background: rgba(30, 30, 30, 0.8);
+}
+
+.night-mode .add-site-dialog input {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.night-mode .add-site-dialog input:focus {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* 遮罩层样式 */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: none;
+  z-index: 999;
+}
+
+.dialog-overlay.show {
+  display: block;
+  animation: overlayShow 0.3s ease-out;
+}
+
+@keyframes overlayShow {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+
+
+.quick-sites-panel {
+  position: fixed;
+  bottom: -100%;
+  left: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(25px) saturate(1.8);
+  -webkit-backdrop-filter: blur(25px) saturate(1.8);
+  padding: 30px 0;
+  z-index: 99;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.1);
+  transform: translateY(100%);
+}
+
+.quick-sites-panel.show {
+  bottom: 0;
+  transform: translateY(0);
+}
+
+.quick-sites-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 24px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+.site-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: white;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.9;
+  padding: 16px;
+  border-radius: 16px;
+  position: relative;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.site-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.site-item:hover::before {
+  opacity: 1;
+}
+
+.site-item:hover {
+  transform: translateY(-8px);
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.site-item img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 14px;
+  margin-bottom: 12px;
+  background: white;
+  padding: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.site-icon {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 14px;
+  margin-bottom: 12px;
+  background: white;
+  padding: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.site-item:hover img {
+  transform: scale(1.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.site-item span {
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.95);
+  transition: color 0.3s ease;
+  margin-top: 4px;
+}
+
+.site-item:hover span {
+  color: white;
+}
+
+.delete-btn,
+.edit-btn {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.delete-btn {
+  top: 8px;
+  right: 8px;
+}
+
+.edit-btn {
+  top: 8px;
+  right: 40px;
+}
+
+.site-item:hover .delete-btn,
+.site-item:hover .edit-btn {
+  opacity: 0.8;
+  transform: scale(1);
+}
+
+.delete-btn:hover,
+.edit-btn:hover {
+  opacity: 1 !important;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.delete-btn:hover {
+  background: rgba(244, 67, 54, 0.8);
+}
+
+.edit-btn:hover {
+  background: rgba(33, 150, 243, 0.8);
+}
+
+/* 添加按钮样式 */
+.add-site-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 120px;
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  background: transparent;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.7;
+}
+
+.add-site-btn:hover {
+  opacity: 1;
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-4px);
+}
+
+.add-site-btn svg {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 8px;
+  opacity: 0.8;
+}
+
+/* 表单样式 */
+.add-site-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  background: rgba(30, 30, 30, 0.95);
+  backdrop-filter: blur(16px);
+  border-radius: 20px;
+  padding: 32px;
+  width: 90%;
+  max-width: 400px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.add-site-dialog.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.add-site-dialog h2 {
+  margin: 0 0 24px;
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.form-group input.error {
+  border-color: rgba(244, 67, 54, 0.5);
+}
+
+.error-message {
+  color: rgb(244, 67, 54);
+  font-size: 12px;
+  margin-top: 8px;
+  opacity: 0;
+  transform: translateY(-8px);
+  animation: showError 0.3s ease forwards;
+}
+
+@keyframes showError {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dialog-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.dialog-buttons button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button[type="submit"] {
+  background: rgb(33, 150, 243);
+  color: white;
+}
+
+button[type="submit"]:hover {
+  background: rgb(25, 118, 210);
+}
+
+button[type="button"] {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+button[type="button"]:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 删除确认对话框样式 */
+.delete-confirm-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.delete-confirm-dialog.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.delete-confirm-dialog .dialog-content {
+  background: rgba(30, 30, 30, 0.95);
+  backdrop-filter: blur(16px);
+  padding: 24px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 320px;
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.delete-confirm-dialog.show .dialog-content {
+  transform: scale(1);
+}
+
+.delete-confirm-dialog h3 {
+  color: white;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.delete-confirm-dialog p {
+  color: rgba(255, 255, 255, 0.8);
+  margin: 16px 0 24px;
+  font-size: 14px;
+}
+
+.delete-confirm-dialog .buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.delete-confirm-dialog button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.delete-confirm-dialog .cancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.delete-confirm-dialog .cancel:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.delete-confirm-dialog .danger {
+  background: rgb(244, 67, 54);
+  color: white;
+}
+
+.delete-confirm-dialog .danger:hover {
+  background: rgb(211, 47, 47);
+}
+
+/* 夜间模式下的样式调整 */
+body.night-mode .quick-sites-panel {
+  background: rgba(30, 30, 30, 0.4);
+}
+
+body.night-mode .delete-btn {
+  background: rgba(50, 50, 50, 0.4);
+}
+
+body.night-mode .delete-btn:hover {
+  background: rgba(200, 50, 50, 0.8);
+}
+
+/* 夜间模式样式适配 */
+body.night-mode .delete-confirm-dialog .dialog-content {
+  background: rgba(20, 20, 20, 0.95);
+}
+
+/* 小屏幕调整 */
+@media (max-width: 768px) {
+  .quick-sites-grid {
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 15px;
+    padding: 0 20px;
+  }
+
+  .site-item img {
+    width: 48px;
+    height: 48px;
+  }
+
+  .site-item span {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .quick-sites-grid {
+    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+    gap: 12px;
+    padding: 0 15px;
+  }
+
+  .site-item img {
+    width: 44px;
+    height: 44px;
+    padding: 6px;
+  }
+
+  .add-site-dialog {
+    padding: 24px;
+  }
+
+  .dialog-buttons button {
+    padding: 10px;
+  }
+}

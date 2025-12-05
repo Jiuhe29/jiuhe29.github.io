@@ -5,195 +5,318 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>简搜</title>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.3/cdn.min.js"></script>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="favicon.ico">
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4dabf7',
+            danger: '#f44336'
+          }
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .bg-blur { @apply blur-xl brightness-75 scale-105; }
+    }
+    @layer base {
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-thumb { @apply bg-white/20 rounded; }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    @keyframes slideDown {
+      from { transform: translateY(0); }
+      to { transform: translateY(100%); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.9; }
+      50% { opacity: 1; }
+    }
+    .animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+    .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+    .logo-glow:hover span { text-shadow: 0 0 20px rgba(77, 171, 247, 0.6); }
+    [x-cloak] { display: none !important; }
+  </style>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
 </head>
 
-<body x-data="searchApp()" x-init="init()" :class="{ 'night': nightMode }">
-  <!-- 背景相关 -->
-  <div class="bg" :class="{ 'blur': searchFocused, 'visible': !bgLoading }" :style="bgImage ? `background-image: url(${bgImage})` : ''"></div>
-  <div class="bg-loading" :class="{ 'visible': bgLoading }">
-    <div class="loading-spinner"></div>
-    <span x-text="bgLoading ? '正在加载背景...' : ''"></span>
+<body x-data="app" x-cloak :class="nightMode && 'dark'"
+  class="h-screen overflow-hidden font-sans text-white select-none bg-slate-900">
+
+  <div class="fixed inset-0 bg-slate-800 bg-cover bg-center -z-20 transition-all duration-500"
+    :class="{ 'bg-blur': searchFocused, 'opacity-100': bgLoaded, 'opacity-0': !bgLoaded }" x-ref="bg"></div>
+  <div class="fixed inset-0 bg-gradient-to-b from-black/20 to-black/70 -z-10"></div>
+
+  <div x-cloak x-show="!bgLoaded"
+    class="fixed inset-0 z-10 flex flex-col items-center justify-center gap-3 text-white/60 text-sm">
+    <div class="w-8 h-8 border-[3px] border-white/10 border-t-primary rounded-full animate-spin"></div>
+    <span>加载中...</span>
   </div>
-  <div class="bg-overlay"></div>
-  <div class="bg-info" x-html="bgInfo"></div>
-  <div class="blur-overlay" :class="{ 'visible': searchFocused }"></div>
 
-  <!-- 浮动Logo -->
-  <div class="floating-logo">简<span>搜</span></div>
+  <div x-show="bgInfo" x-html="bgInfo" class="fixed bottom-12 left-1/2 -translate-x-1/2 text-xs text-white/60 px-4 py-1.5 bg-black/30 backdrop-blur-lg rounded-full z-10 max-w-[90%] truncate
+              [&_a]:text-white [&_a]:no-underline [&_a:hover]:text-primary"></div>
 
-  <!-- 主容器 -->
-  <div class="container">
-    <div id="time" x-text="currentTime"></div>
-    
-    <!-- 搜索容器 -->
-    <div class="search-container">
-      <input type="text" 
-             id="search" 
-             :placeholder="`在${engines[currentEngine].name}中搜索...`" 
-             autocomplete="off"
-             x-model="searchQuery" 
-             x-on:focus="toggleBlur(true)" 
-             x-on:input="handleSearchInput"
-             x-on:keypress="handleKeypress" 
-             :class="{ 'focused': searchFocused, 'not-focused': !searchFocused }" />
-      
-      <div class="search-icon">⌕</div>
-      
-      <!-- 搜索引擎切换器 -->
-      <div class="engine-switcher" x-on:click="toggleEngineOptions" x-text="engines[currentEngine].name"></div>
-      
-      <!-- 搜索引擎选项 -->
-      <div class="engine-options" :class="{ 'visible': engineOptionsVisible }">
-        <template x-for="(engine, key) in engines" :key="key">
-          <div class="engine-option" 
-               :class="{ 'active': currentEngine === key }" 
-               x-on:click="switchEngine(key)"
-               :data-engine="key">
-            <div class="engine-icon" :class="`${key}-icon`"></div>
-            <span x-text="engine.name"></span>
+  <div
+    class="fixed top-5 left-6 text-xl font-bold text-white/90 z-10 logo-glow cursor-default transition-all hover:scale-105">
+    简<span class="text-primary transition-all">搜</span></div>
+
+  <main class="relative z-10 max-w-xl mx-auto px-5 pt-24 sm:pt-28">
+    <div class="text-center text-5xl sm:text-6xl font-light tracking-wide mb-6 drop-shadow-lg" x-text="time"></div>
+
+    <div class="relative" @click.outside="closeSearch">
+      <input type="text"
+        class="w-full py-4 pl-12 pr-32 text-base rounded-full border border-white/15 bg-white/10 backdrop-blur-xl text-white placeholder-white/50 outline-none transition-all duration-300
+               focus:bg-white focus:text-gray-800 focus:border-transparent focus:placeholder-gray-400 focus:shadow-[0_0_20px_rgba(77,171,247,0.3)]
+               dark:focus:bg-gray-800 dark:focus:text-white dark:focus:placeholder-gray-400 dark:focus:shadow-[0_0_20px_rgba(77,171,247,0.2)]"
+        :placeholder="`在 ${engines[engine].name} 中搜索...`" autocomplete="off" x-model="query" x-ref="searchInput"
+        aria-label="搜索输入框" aria-autocomplete="list" @focus="searchFocused = true" @input="onInput"
+        @keydown.enter="search" @keydown.escape.stop="closeSearch" @keydown.arrow-down.prevent="selectSuggestion(1)"
+        @keydown.arrow-up.prevent="selectSuggestion(-1)">
+      <svg class="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50 pointer-events-none transition-colors"
+        :class="searchFocused && 'text-gray-500 dark:text-gray-400'" fill="none" stroke="currentColor"
+        viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+
+      <button x-show="query.length > 0" x-transition.opacity
+        @click="query = ''; suggestions = []; $refs.searchInput.focus()"
+        class="absolute right-20 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full transition-colors"
+        :class="searchFocused ? 'text-gray-400 hover:text-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 dark:hover:text-gray-200' : 'text-white/40 hover:text-white/70 hover:bg-white/10'"
+        aria-label="清空搜索">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <div
+        class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 px-3 py-2 text-sm text-white/50 rounded-full cursor-pointer transition-all hover:bg-white/10"
+        :class="searchFocused && 'text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10'"
+        @click.stop="engineMenuOpen = !engineMenuOpen" role="button" aria-haspopup="listbox"
+        :aria-expanded="engineMenuOpen">
+        <span x-text="engines[engine].name"></span>
+        <svg class="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+
+      <div x-show="engineMenuOpen" x-transition.origin.top.right @click.outside="engineMenuOpen = false"
+        class="absolute top-full right-0 mt-2 min-w-[140px] bg-white dark:bg-gray-800 rounded-xl py-2 shadow-xl border border-gray-100 dark:border-gray-700 z-20 overflow-hidden">
+        <template x-for="(e, key) in engines" :key="key">
+          <div class="px-4 py-2.5 text-sm cursor-pointer transition-all flex items-center gap-2"
+            :class="engine === key ? 'bg-primary/10 text-primary font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'"
+            @click="setEngine(key)">
+            <span class="w-1.5 h-1.5 rounded-full" :class="engine === key ? 'bg-primary' : 'bg-transparent'"></span>
+            <span x-text="e.name"></span>
           </div>
         </template>
       </div>
-      
-      <!-- 搜索建议 -->
-      <ul class="suggestions" :class="{ 'visible': suggestions.length > 0 && searchFocused }">
-        <template x-if="isLoadingSuggestions">
-          <li class="loading">
-            <div class="loading-spinner"></div> 正在获取建议...
+
+      <ul x-show="suggestions.length && searchFocused" x-transition
+        class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-2xl py-2 max-h-[50vh] overflow-y-auto shadow-2xl z-20 list-none animate-fade-in"
+        role="listbox" aria-label="搜索建议">
+        <template x-for="(s, i) in suggestions" :key="i">
+          <li
+            class="px-5 py-3 text-gray-700 dark:text-gray-200 cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-700 hover:pl-6 flex items-center gap-3"
+            :class="selectedIndex === i && 'bg-gray-100 dark:bg-gray-700 pl-6'" @click="search(s)"
+            @mouseenter="selectedIndex = i">
+            <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" fill="none" stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span x-text="s" class="flex-1 truncate"></span>
+            <kbd
+              class="text-[10px] text-gray-400 bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded opacity-0 transition-opacity"
+              :class="selectedIndex === i && 'opacity-100'">Enter</kbd>
           </li>
         </template>
-        <template x-if="!isLoadingSuggestions && suggestions.length > 0">
-          <template x-for="suggestion in suggestions" :key="suggestion">
-            <li x-text="suggestion" x-on:click="performSearch()"></li>
-          </template>
-        </template>
-        <template x-if="!isLoadingSuggestions && suggestions.length === 0 && searchQuery.trim()">
-          <li class="error">无相关建议</li>
+      </ul>
+
+      <ul x-show="!query && searchHistory.length && searchFocused && !suggestions.length" x-transition
+        class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-2xl py-2 max-h-[50vh] overflow-y-auto shadow-2xl z-20 list-none animate-fade-in"
+        role="listbox" aria-label="搜索历史">
+        <li class="px-5 py-2 flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
+          <span>搜索历史</span>
+          <button @click.stop="clearHistory" class="hover:text-danger transition-colors">清空</button>
+        </li>
+        <template x-for="(h, i) in searchHistory" :key="i">
+          <li
+            class="px-5 py-3 text-gray-700 dark:text-gray-200 cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 group"
+            @click="query = h; search(h)">
+            <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" fill="none" stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span x-text="h" class="flex-1 truncate"></span>
+            <button @click.stop="removeHistoryItem(i)"
+              class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-danger transition-all p-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"></svg>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </li>
         </template>
       </ul>
     </div>
-    
-    <!-- 快捷提示 -->
-    <div class="shortcut-hint">F9 切换夜间模式 | Esc 退出搜索</div>
+    <div class="flex justify-center gap-3 mt-5 transition-all duration-300"
+      :class="searchFocused ? 'opacity-0 pointer-events-none' : 'opacity-100'">
+      <span @click="panelOpen = true"
+        class="text-sm text-white/50 hover:text-white/80 cursor-pointer transition-colors">快捷导航</span>
+      <span class="text-white/30">|</span>
+      <span @click="toggleNight()" class="text-sm text-white/50 hover:text-white/80 cursor-pointer transition-colors"
+        x-text="nightMode ? '日间模式' : '夜间模式'"></span>
+    </div>
+  </main>
+
+  <div class="fixed bottom-4 left-1/2 -translate-x-1/2 text-xs text-white/40 z-10 flex items-center gap-4">
+    <span class="hidden sm:flex items-center gap-1.5 text-white/30">
+      <kbd class="px-1.5 py-0.5 bg-white/10 rounded text-[10px]">F9</kbd> 切换主题
+    </span>
+    <span class="[&_a]:text-white/50 [&_a]:no-underline [&_a:hover]:text-primary">
+      Powered by <a href="https://www.bing.com" target="_blank">Bing</a> & <a href="https://github.com/Jiuhe29"
+        target="_blank">Jiuhe29</a>
+    </span>
   </div>
 
-  <!-- 页脚信息 -->
-  <div class="powered-by">
-    Powered by <a href="https://www.bing.com" target="_blank">Bing</a> & <a href="https://github.com/Jiuhe29">Jiuhe29</a>
-  </div>
-
-  <!-- API状态指示器 -->
-  <div class="api-status">
-    <div class="status-indicator" :class="{ 'offline': !apiOnline }"></div>
-    <span x-text="`API 状态: ${apiOnline ? '在线' : '离线'}`"></span>
-  </div>
-
-  <!-- 快捷网站面板 -->
-  <div class="quick-sites-panel" :class="{ 'show': quickLayoutVisible }">
-    <div class="quick-sites-grid">
-      <template x-for="(site, index) in customSites" :key="`${site.url}-${index}`">
-        <a :href="site.url" 
-           class="site-item" 
-           target="_blank" 
-           :data-name="site.name" 
-           :data-url="site.url"
-           :data-icon="site.icon"
-           x-on:mouseenter="hoveredSite = site.url"
-           x-on:mouseleave="hoveredSite = ''">
-          <img :src="site.icon || getDefaultIcon(site.url)" 
-               :alt="site.name" 
-               class="site-icon"
-               x-on:error="handleIconError($event, site.url)">
-          <span x-text="site.name"></span>
-          
-          <!-- 删除按钮 -->
-          <button class="delete-btn" 
-                  x-on:click.prevent="openDeleteDialog(site.url)" 
-                  title="删除网站">
-            <svg viewBox="0 0 24 24" width="12" height="12">
-              <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-            </svg>
-          </button>
-          
-          <!-- 编辑按钮 -->
-          <button class="edit-btn" 
-                  x-on:click.prevent="openAddSiteForm(site)" 
-                  title="编辑网站">
-            <svg viewBox="0 0 24 24" width="12" height="12">
-              <path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-            </svg>
-          </button>
-        </a>
-      </template>
-
-      <!-- 添加网站按钮 -->
-      <button class="site-item add-site-btn" x-on:click="openAddSiteForm()">
-        <div class="add-icon">
-          <svg viewBox="0 0 24 24" width="24" height="24">
-            <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+  <div x-cloak class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end transition-all duration-300"
+    :class="panelOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'"
+    @click.self="panelOpen = false">
+    <div class="w-full max-h-[70vh] bg-white/10 backdrop-blur-2xl rounded-t-3xl p-6 pb-8 overflow-y-auto"
+      :class="panelOpen ? 'animate-slide-up' : 'translate-y-full'" @touchstart="touchStartY = $event.touches[0].clientY"
+      @touchmove="touchMoveY = $event.touches[0].clientY"
+      @touchend="if (touchMoveY - touchStartY > 80) panelOpen = false" role="dialog" aria-label="快捷导航面板">
+      <div class="flex items-center justify-between mb-5 px-2">
+        <h2 class="text-lg font-medium text-white/90">快捷导航</h2>
+        <button @click="panelOpen = false"
+          class="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
-        </div>
-        <span>添加网站</span>
-      </button>
+        </button>
+      </div>
+      <div class="grid grid-cols-[repeat(auto-fill,minmax(90px,1fr))] gap-5 max-w-4xl mx-auto">
+        <template x-for="(site, i) in sites" :key="site.url + i">
+          <a :href="site.url" target="_blank" @click.stop
+            class="group flex flex-col items-center gap-2 p-4 bg-white/10 rounded-2xl no-underline text-white relative transition-all hover:bg-white/20 hover:-translate-y-1 hover:shadow-lg">
+            <img :src="site.icon || getIcon(site.url)" @error="$el.src = 'favicon.ico'" :alt="site.name"
+              class="w-12 h-12 rounded-xl bg-white p-1.5 object-contain">
+            <span class="text-xs text-center opacity-90 truncate w-full" x-text="site.name"></span>
+            <button @click.prevent.stop="editSite(i)" title="编辑"
+              class="absolute top-1.5 right-8 w-5 h-5 rounded bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary flex items-center justify-center">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </button>
+            <button @click.prevent.stop="deleteSite(i)" title="删除"
+              class="absolute top-1.5 right-1.5 w-5 h-5 rounded bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-danger flex items-center justify-center">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </a>
+        </template>
+        <button @click="openSiteForm()"
+          class="flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed border-white/30 rounded-2xl bg-transparent text-white opacity-60 cursor-pointer transition-all hover:opacity-100 hover:border-white/50 hover:bg-white/5">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4" />
+          </svg>
+          <span class="text-xs">添加</span>
+        </button>
+      </div>
+      <div class="w-12 h-1 bg-white/20 rounded-full mx-auto mt-6"></div>
     </div>
   </div>
 
-  <!-- 添加/编辑网站弹窗 -->
-  <div class="add-site-dialog" :class="{ 'show': isFormOpen }" x-show="isFormOpen">
-    <div class="dialog-overlay" x-on:click="closeAddSiteForm()"></div>
-    <div class="dialog-content">
-      <h3 x-text="isEditing ? '编辑快捷网站' : '添加快捷网站'"></h3>
-      
-      <form x-on:submit.prevent="addEditSite()">
-        <div class="form-group">
-          <label>网站名称</label>
-          <input type="text" 
-                 x-ref="siteName"
-                 placeholder="请输入网站名称" 
-                 required 
-                 maxlength="20">
+  <div x-cloak x-show="formOpen" x-transition @click.self="formOpen = false"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-5" role="dialog"
+    aria-modal="true" :aria-label="editingIndex >= 0 ? '编辑网站' : '添加网站'">
+    <div class="w-full max-w-sm bg-gray-900/95 backdrop-blur-xl rounded-2xl p-7 animate-fade-in">
+      <h3 class="text-lg font-semibold mb-5" x-text="editingIndex >= 0 ? '编辑网站' : '添加网站'"></h3>
+      <form @submit.prevent="saveSite" class="space-y-3">
+        <div class="relative">
+          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" fill="none" stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+          <input type="text" x-model="formData.name" placeholder="网站名称" maxlength="20" aria-label="网站名称"
+            class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 outline-none transition-colors focus:border-primary">
         </div>
-
-        <div class="form-group">
-          <label>网站地址</label>
-          <input type="text" 
-                 x-ref="siteUrl"
-                 placeholder="例如: www.example.com (不需要输入https://)" 
-                 required>
+        <div class="relative">
+          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" fill="none" stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+          </svg>
+          <input type="text" x-model="formData.url" placeholder="网址 (如 example.com)" required aria-label="网址"
+            class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 outline-none transition-colors focus:border-primary">
         </div>
-
-        <div class="form-group">
-          <label>图标地址 (可选)</label>
-          <input type="url" 
-                 x-ref="siteIcon"
-                 placeholder="图标URL地址">
+        <div class="relative">
+          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" fill="none" stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <input type="text" x-model="formData.icon" placeholder="图标地址 (可选)" aria-label="图标地址"
+            class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 outline-none transition-colors focus:border-primary">
         </div>
-
-        <div class="dialog-buttons">
-          <button type="button" x-on:click="closeAddSiteForm()">取消</button>
-          <button type="submit">确定</button>
+        <div class="flex gap-3 pt-4">
+          <button type="button" @click="formOpen = false"
+            class="flex-1 py-3 bg-white/10 rounded-xl font-medium transition-colors hover:bg-white/15">取消</button>
+          <button type="submit"
+            class="flex-1 py-3 bg-primary rounded-xl font-medium transition-all hover:brightness-110">确定</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- 删除确认对话框 -->
-  <div class="delete-confirm-dialog" :class="{ 'show': deleteDialogVisible }" x-show="deleteDialogVisible">
-    <div class="dialog-overlay" x-on:click="deleteDialogVisible = false"></div>
-    <div class="dialog-content">
-      <h3>删除确认</h3>
-      <p>确定要删除这个快捷网站吗？此操作无法撤销。</p>
-      <div class="dialog-buttons">
-        <button type="button" class="cancel" x-on:click="deleteDialogVisible = false">取消</button>
-        <button type="button" class="danger" x-on:click="confirmDelete()">删除</button>
+  <div x-cloak x-show="confirmOpen" x-transition @click.self="confirmOpen = false"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-5" role="alertdialog"
+    aria-modal="true" aria-labelledby="confirm-title">
+    <div class="w-full max-w-xs bg-gray-900/95 backdrop-blur-xl rounded-2xl p-7 animate-fade-in">
+      <h3 id="confirm-title" class="text-lg font-semibold mb-4">确认删除</h3>
+      <p class="text-sm text-white/60 mb-6 leading-relaxed">删除后无法恢复，确定要删除吗？</p>
+      <div class="flex gap-3">
+        <button @click="confirmOpen = false"
+          class="flex-1 py-3 bg-white/10 rounded-xl font-medium transition-colors hover:bg-white/15">取消</button>
+        <button @click="confirmDelete"
+          class="flex-1 py-3 bg-danger rounded-xl font-medium transition-all hover:brightness-110">删除</button>
       </div>
     </div>
   </div>
 
-  <!-- 引入JavaScript文件 -->
-  <script src="js/script.js"></script>
+  <div x-cloak x-show="toast" x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+    x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0"
+    x-transition:leave-end="opacity-0 translate-y-4"
+    class="fixed bottom-20 left-1/2 -translate-x-1/2 px-5 py-2.5 bg-gray-900/95 text-white text-sm rounded-full shadow-xl z-[200] backdrop-blur-xl flex items-center gap-2"
+    role="status" aria-live="polite">
+    <svg x-show="toastType === 'success'" class="w-4 h-4 text-green-400" fill="none" stroke="currentColor"
+      viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+    </svg>
+    <svg x-show="toastType === 'error'" class="w-4 h-4 text-red-400" fill="none" stroke="currentColor"
+      viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+    <span x-text="toastMessage"></span>
+  </div>
+
+  <script src="js/app.js"></script>
 </body>
 
 </html>

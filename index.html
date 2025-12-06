@@ -198,7 +198,7 @@
       :class="panelOpen ? 'animate-slide-up' : 'translate-y-full'" @touchstart="touchStartY = $event.touches[0].clientY"
       @touchmove="touchMoveY = $event.touches[0].clientY"
       @touchend="if (touchMoveY - touchStartY > 80) panelOpen = false" role="dialog" aria-label="快捷导航面板">
-      <div class="flex items-center justify-between mb-5 px-2">
+      <div class="flex items-center justify-between mb-5 px-2 max-w-4xl mx-auto">
         <h2 class="text-lg font-medium text-white/90">快捷导航</h2>
         <button @click="panelOpen = false"
           class="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-all">

@@ -286,12 +286,7 @@ document.addEventListener('alpine:init', () => {
     },
     
     initAutoNightMode() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          pos => this.calculateSunTimes(pos.coords.latitude, pos.coords.longitude),
-          () => {}
-        );
-      }
+      this.fetchLocationByIP();
       
       setInterval(() => {
         if (this.autoNightMode) {
@@ -301,6 +296,26 @@ document.addEventListener('alpine:init', () => {
           }
         }
       }, 60000);
+    },
+    
+    async fetchLocationByIP() {
+      const apis = [
+        { url: 'https://ipapi.co/json/', parse: d => ({ lat: d.latitude, lng: d.longitude }) },
+        { url: 'https://ip-api.com/json/', parse: d => ({ lat: d.lat, lng: d.lon }) },
+        { url: 'https://ipwho.is/', parse: d => ({ lat: d.latitude, lng: d.longitude }) }
+      ];
+      
+      for (const api of apis) {
+        try {
+          const res = await fetch(api.url);
+          const data = await res.json();
+          const { lat, lng } = api.parse(data);
+          if (lat && lng) {
+            this.calculateSunTimes(lat, lng);
+            return;
+          }
+        } catch {}
+      }
     },
     
     calculateSunTimes(lat, lng) {

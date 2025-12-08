@@ -64,6 +64,13 @@ document.addEventListener('alpine:init', () => {
     confirmOpen: false,
     deleteIndex: -1,
     
+    batchMode: false,
+    selectedSites: [],
+    dragIndex: -1,
+    dragOverIndex: -1,
+    importExportOpen: false,
+    importData: '',
+    
     _debounce: null,
     _jsonpId: 0,
     _fetchId: 0,
@@ -589,9 +596,118 @@ document.addEventListener('alpine:init', () => {
         this.sites.splice(this.deleteIndex, 1);
         this.saveSites();
         this.showToast('删除成功', 'success');
+      } else if (this.deleteIndex === -999) {
+        this.sites = this.sites.filter((_, i) => !this.selectedSites.includes(i));
+        this.saveSites();
+        this.showToast(`已删除 ${this.selectedSites.length} 个网站`, 'success');
+        this.selectedSites = [];
+        this.batchMode = false;
       }
       this.confirmOpen = false;
       this.deleteIndex = -1;
+    },
+    
+    toggleBatchMode() {
+      this.batchMode = !this.batchMode;
+      this.selectedSites = [];
+    },
+    
+    toggleSelectSite(index) {
+      const idx = this.selectedSites.indexOf(index);
+      if (idx === -1) {
+        this.selectedSites.push(index);
+      } else {
+        this.selectedSites.splice(idx, 1);
+      }
+    },
+    
+    selectAllSites() {
+      if (this.selectedSites.length === this.sites.length) {
+        this.selectedSites = [];
+      } else {
+        this.selectedSites = this.sites.map((_, i) => i);
+      }
+    },
+    
+    batchDelete() {
+      if (!this.selectedSites.length) {
+        this.showToast('请先选择要删除的网站', 'error');
+        return;
+      }
+      this.deleteIndex = -999;
+      this.confirmOpen = true;
+    },
+    
+    onDragStart(index, e) {
+      if (this.batchMode) return;
+      this.dragIndex = index;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', index);
+    },
+    
+    onDragOver(index, e) {
+      if (this.batchMode || this.dragIndex === -1) return;
+      e.preventDefault();
+      this.dragOverIndex = index;
+    },
+    
+    onDragEnd() {
+      if (this.dragIndex !== -1 && this.dragOverIndex !== -1 && this.dragIndex !== this.dragOverIndex) {
+        const item = this.sites.splice(this.dragIndex, 1)[0];
+        this.sites.splice(this.dragOverIndex, 0, item);
+        this.saveSites();
+      }
+      this.dragIndex = -1;
+      this.dragOverIndex = -1;
+    },
+    
+    openImportExport() {
+      this.importData = '';
+      this.importExportOpen = true;
+    },
+    
+    exportSites() {
+      const data = JSON.stringify(this.sites, null, 2);
+      navigator.clipboard.writeText(data).then(() => {
+        this.showToast('已复制到剪贴板', 'success');
+      }).catch(() => {
+        this.importData = data;
+        this.showToast('请手动复制', 'error');
+      });
+    },
+    
+    importSites() {
+      if (!this.importData.trim()) {
+        this.showToast('请输入导入数据', 'error');
+        return;
+      }
+      try {
+        const data = JSON.parse(this.importData);
+        if (!Array.isArray(data)) throw new Error();
+        const valid = data.filter(s => s && typeof s.url === 'string' && s.url.trim());
+        if (!valid.length) {
+          this.showToast('没有有效的网站数据', 'error');
+          return;
+        }
+        this.sites = valid.map(s => ({
+          name: s.name || '',
+          url: s.url,
+          icon: s.icon || ''
+        }));
+        this.saveSites();
+        this.importExportOpen = false;
+        this.showToast(`成功导入 ${valid.length} 个网站`, 'success');
+      } catch {
+        this.showToast('数据格式错误', 'error');
+      }
+    },
+    
+    resetToDefault() {
+      this.sites = [...DEFAULT_SITES];
+      this.saveSites();
+      this.selectedSites = [];
+      this.batchMode = false;
+      this.showToast('已恢复默认', 'success');
     }
   }));
 });

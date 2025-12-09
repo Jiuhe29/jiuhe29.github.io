@@ -4,8 +4,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#4dabf7">
+  <meta name="description" content="简洁美观的搜索导航页">
   <title>简搜</title>
   <link rel="icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="favicon.ico">
+  <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
   <script>
     tailwind.config = {
@@ -48,8 +52,14 @@
     .animate-fade-in { animation: fadeIn 0.3s ease-out; }
     .logo-glow:hover span { text-shadow: 0 0 20px rgba(77, 171, 247, 0.6); }
     [x-cloak] { display: none !important; }
+    *:focus-visible { outline: 2px solid #4dabf7; outline-offset: 2px; }
   </style>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => { });
+    }
+  </script>
 </head>
 
 <body x-data="app" x-cloak :class="nightMode && 'dark'"
@@ -77,7 +87,7 @@
 
     <div class="relative" @click.outside="closeSearch">
       <input type="text"
-        class="w-full py-4 pl-12 pr-32 text-base rounded-full border border-white/15 bg-white/10 backdrop-blur-xl text-white placeholder-white/50 outline-none transition-all duration-300
+        class="w-full py-4 pl-12 pr-40 text-base rounded-full border border-white/15 bg-white/10 backdrop-blur-xl text-white placeholder-white/50 outline-none transition-all duration-300
                focus:bg-white focus:text-gray-800 focus:border-transparent focus:placeholder-gray-400 focus:shadow-[0_0_20px_rgba(77,171,247,0.3)]
                dark:focus:bg-gray-800 dark:focus:text-white dark:focus:placeholder-gray-400 dark:focus:shadow-[0_0_20px_rgba(77,171,247,0.2)]"
         :placeholder="`在 ${engines[engine].name} 中搜索...`" autocomplete="off" x-model="query" x-ref="searchInput"
@@ -91,21 +101,14 @@
           d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
       </svg>
 
-      <button x-show="query.length > 0" x-transition.opacity
-        @click="query = ''; suggestions = []; $refs.searchInput.focus()"
-        class="absolute right-20 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full transition-colors"
-        :class="searchFocused ? 'text-gray-400 hover:text-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 dark:hover:text-gray-200' : 'text-white/40 hover:text-white/70 hover:bg-white/10'"
-        aria-label="清空搜索">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
 
       <div
-        class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 px-3 py-2 text-sm text-white/50 rounded-full cursor-pointer transition-all hover:bg-white/10"
+        class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-3 py-2 text-sm text-white/50 rounded-full cursor-pointer transition-all hover:bg-white/10"
         :class="searchFocused && 'text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10'"
         @click.stop="engineMenuOpen = !engineMenuOpen" role="button" aria-haspopup="listbox"
         :aria-expanded="engineMenuOpen">
+        <img :src="engines[engine].icon" :alt="engines[engine].name" class="w-4 h-4 rounded-sm"
+          @error="$el.style.display='none'">
         <span x-text="engines[engine].name"></span>
         <svg class="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -113,18 +116,18 @@
       </div>
 
       <div x-show="engineMenuOpen" x-transition.origin.top.right @click.outside="engineMenuOpen = false"
-        class="absolute top-full right-0 mt-2 min-w-[140px] bg-white dark:bg-gray-800 rounded-xl py-2 shadow-xl border border-gray-100 dark:border-gray-700 z-20 overflow-hidden">
+        class="absolute top-full right-0 mt-2 min-w-[140px] bg-white dark:bg-gray-800 rounded-xl py-2 shadow-xl border border-gray-100 dark:border-gray-700 z-30 overflow-hidden">
         <template x-for="(e, key) in engines" :key="key">
-          <div class="px-4 py-2.5 text-sm cursor-pointer transition-all flex items-center gap-2"
+          <div class="px-4 py-2.5 text-sm cursor-pointer transition-all flex items-center gap-2.5"
             :class="engine === key ? 'bg-primary/10 text-primary font-medium' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'"
             @click="setEngine(key)">
-            <span class="w-1.5 h-1.5 rounded-full" :class="engine === key ? 'bg-primary' : 'bg-transparent'"></span>
+            <img :src="e.icon" :alt="e.name" class="w-4 h-4 rounded-sm" @error="$el.style.display='none'">
             <span x-text="e.name"></span>
           </div>
         </template>
       </div>
 
-      <ul x-show="suggestions.length && searchFocused" x-transition
+      <ul x-show="suggestions.length && searchFocused && !engineMenuOpen" x-transition
         class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-2xl py-2 max-h-[50vh] overflow-y-auto shadow-2xl z-20 list-none animate-fade-in"
         role="listbox" aria-label="搜索建议">
         <template x-for="(s, i) in suggestions" :key="i">
@@ -145,7 +148,8 @@
         </template>
       </ul>
 
-      <ul x-show="!query && searchHistory.length && searchFocused && !suggestions.length" x-transition
+      <ul x-show="!query && searchHistory.length && searchFocused && !suggestions.length && !engineMenuOpen"
+        x-transition
         class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-2xl py-2 max-h-[50vh] overflow-y-auto shadow-2xl z-20 list-none animate-fade-in"
         role="listbox" aria-label="搜索历史">
         <li class="px-5 py-2 flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
@@ -164,8 +168,9 @@
             <span x-text="h" class="flex-1 truncate"></span>
             <button @click.stop="removeHistoryItem(i)"
               class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-danger transition-all p-1">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"></svg>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </li>
         </template>
@@ -204,14 +209,16 @@
           <button @click="openImportExport()" title="导入/导出"
             class="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-all">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
           </button>
           <button @click="toggleBatchMode()" title="批量管理"
             class="w-8 h-8 flex items-center justify-center rounded-full transition-all"
             :class="batchMode ? 'bg-primary text-white' : 'bg-white/10 hover:bg-white/20 text-white/60 hover:text-white'">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           </button>
           <button @click="panelOpen = false"
@@ -222,44 +229,53 @@
           </button>
         </div>
       </div>
-      <div x-show="batchMode" x-transition class="flex items-center justify-between mb-4 px-2 max-w-4xl mx-auto">
+      <div x-show="batchMode" class="flex items-center justify-between mb-4 px-2 max-w-4xl mx-auto">
         <div class="flex items-center gap-3">
           <button @click="selectAllSites()" class="text-sm text-white/70 hover:text-white transition-colors">
             <span x-text="selectedSites.length === sites.length ? '取消全选' : '全选'"></span>
           </button>
-          <span class="text-sm text-white/50" x-show="selectedSites.length">已选 <span x-text="selectedSites.length"></span> 项</span>
+          <span class="text-sm text-white/50" x-show="selectedSites.length">已选 <span
+              x-text="selectedSites.length"></span> 项</span>
         </div>
         <div class="flex items-center gap-2">
           <button @click="batchDelete()" :disabled="!selectedSites.length"
             class="px-3 py-1.5 text-sm rounded-lg transition-all"
             :class="selectedSites.length ? 'bg-danger/80 hover:bg-danger text-white' : 'bg-white/10 text-white/30 cursor-not-allowed'">删除选中</button>
-          <button @click="resetToDefault()" class="px-3 py-1.5 text-sm bg-white/10 hover:bg-white/20 text-white/70 rounded-lg transition-all">恢复默认</button>
+          <button @click="resetToDefault()"
+            class="px-3 py-1.5 text-sm bg-white/10 hover:bg-white/20 text-white/70 rounded-lg transition-all">恢复默认</button>
         </div>
       </div>
       <div class="grid grid-cols-[repeat(auto-fill,minmax(90px,1fr))] gap-5 max-w-4xl mx-auto">
         <template x-for="(site, i) in sites" :key="site.url + i">
-          <div :draggable="!batchMode" @dragstart="onDragStart(i, $event)" @dragover="onDragOver(i, $event)" @dragend="onDragEnd()" @drop.prevent="onDragEnd()"
+          <div :data-site-index="i" :draggable="!batchMode" @dragstart="onDragStart(i, $event)"
+            @dragover="onDragOver(i, $event)" @dragend="onDragEnd()" @drop.prevent="onDragEnd()"
+            @touchstart="onSiteTouchStart(i, $event)" @touchend="onSiteTouchEnd(i, $event)"
+            @touchmove="onSiteTouchMove($event)" @click.outside="longPressIndex === i && closeLongPress()"
             class="group flex flex-col items-center gap-2 p-4 bg-white/10 rounded-2xl text-white relative transition-all cursor-pointer"
             :class="{
-              'hover:bg-white/20 hover:-translate-y-1 hover:shadow-lg': !batchMode,
+              'hover:bg-white/20 hover:-translate-y-1 hover:shadow-lg': !batchMode && touchDragIndex === -1,
               'ring-2 ring-primary bg-primary/20': batchMode && selectedSites.includes(i),
-              'opacity-50 scale-95': dragIndex === i,
-              'ring-2 ring-white/50': dragOverIndex === i && dragIndex !== i
+              'opacity-50 scale-95': dragIndex === i || touchDragIndex === i,
+              'ring-2 ring-white/50 scale-105': dragOverIndex === i && dragIndex !== i && touchDragIndex !== i,
+              'ring-2 ring-primary -translate-y-1 shadow-lg bg-white/20': panelFocusIndex === i && !batchMode
             }"
-            @click="batchMode ? toggleSelectSite(i) : window.open(site.url, '_blank')">
-            <div x-show="batchMode" class="absolute top-2 left-2 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all"
+            @click="batchMode ? toggleSelectSite(i) : (longPressIndex === i || touchDragIndex !== -1 ? null : window.open(site.url, '_blank'))">
+            <div x-show="batchMode"
+              class="absolute top-2 left-2 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all"
               :class="selectedSites.includes(i) ? 'bg-primary border-primary' : 'border-white/40'">
-              <svg x-show="selectedSites.includes(i)" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg x-show="selectedSites.includes(i)" class="w-3 h-3 text-white" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
               </svg>
             </div>
             <img :src="site.icon || getIcon(site.url)" @error="$el.src = 'favicon.ico'" :alt="site.name"
-              class="w-12 h-12 rounded-xl bg-white p-1.5 object-contain">
-            <span class="text-xs text-center opacity-90 truncate w-full" x-text="site.name"></span>
+              class="w-12 h-12 rounded-xl bg-white p-1.5 object-contain pointer-events-none">
+            <span class="text-xs text-center opacity-90 truncate w-full pointer-events-none" x-text="site.name"></span>
             <template x-if="!batchMode">
-              <button @click.stop="editSite(i)" title="编辑"
-                class="absolute top-1.5 right-1.5 w-5 h-5 rounded bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary flex items-center justify-center">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button @click.stop="editSite(i); closeLongPress()" title="编辑"
+                class="absolute top-1.5 right-1.5 w-6 h-6 rounded-lg bg-black/50 text-white transition-all flex items-center justify-center"
+                :class="longPressIndex === i ? 'opacity-100 scale-100' : 'opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100'">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                 </svg>
@@ -286,22 +302,28 @@
       <h3 class="text-lg font-semibold mb-5" x-text="editingIndex >= 0 ? '编辑网站' : '添加网站'"></h3>
       <form @submit.prevent="saveSite" class="space-y-3">
         <div class="relative">
-          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" fill="none" stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
           </svg>
           <input type="text" x-model="formData.name" placeholder="网站名称" maxlength="20" aria-label="网站名称"
             class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 outline-none transition-colors focus:border-primary">
         </div>
         <div class="relative">
-          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" fill="none" stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
           </svg>
           <input type="text" x-model="formData.url" placeholder="网址 (如 example.com)" required aria-label="网址"
             class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 outline-none transition-colors focus:border-primary">
         </div>
         <div class="relative">
-          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" fill="none" stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
           <input type="text" x-model="formData.icon" placeholder="图标地址 (可选)" aria-label="图标地址"
             class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 outline-none transition-colors focus:border-primary">
@@ -325,7 +347,8 @@
         <div>
           <div class="flex items-center justify-between mb-2">
             <span class="text-sm text-white/70">导出当前导航</span>
-            <button @click="exportSites()" class="px-3 py-1.5 text-sm bg-primary/80 hover:bg-primary text-white rounded-lg transition-all">复制到剪贴板</button>
+            <button @click="exportSites()"
+              class="px-3 py-1.5 text-sm bg-primary/80 hover:bg-primary text-white rounded-lg transition-all">复制到剪贴板</button>
           </div>
         </div>
         <div class="border-t border-white/10 pt-4">
@@ -348,7 +371,8 @@
     aria-modal="true" aria-labelledby="confirm-title">
     <div class="w-full max-w-xs bg-gray-900/95 backdrop-blur-xl rounded-2xl p-7 animate-fade-in">
       <h3 id="confirm-title" class="text-lg font-semibold mb-4">确认删除</h3>
-      <p class="text-sm text-white/60 mb-6 leading-relaxed" x-text="deleteIndex === -999 ? `确定要删除选中的 ${selectedSites.length} 个网站吗？` : '删除后无法恢复，确定要删除吗？'"></p>
+      <p class="text-sm text-white/60 mb-6 leading-relaxed"
+        x-text="deleteIndex === -999 ? `确定要删除选中的 ${selectedSites.length} 个网站吗？` : '删除后无法恢复，确定要删除吗？'"></p>
       <div class="flex gap-3">
         <button @click="confirmOpen = false"
           class="flex-1 py-3 bg-white/10 rounded-xl font-medium transition-colors hover:bg-white/15">取消</button>
@@ -364,10 +388,12 @@
     x-transition:leave-end="opacity-0 translate-y-4"
     class="fixed bottom-20 left-1/2 -translate-x-1/2 px-5 py-2.5 bg-gray-900/95 text-white text-sm rounded-full shadow-xl z-[200] backdrop-blur-xl flex items-center gap-2"
     role="status" aria-live="polite">
-    <svg x-show="toastType === 'success'" class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg x-show="toastType === 'success'" class="w-4 h-4 text-green-400" fill="none" stroke="currentColor"
+      viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
     </svg>
-    <svg x-show="toastType === 'error'" class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg x-show="toastType === 'error'" class="w-4 h-4 text-red-400" fill="none" stroke="currentColor"
+      viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
     </svg>
     <span x-text="toastMessage"></span>

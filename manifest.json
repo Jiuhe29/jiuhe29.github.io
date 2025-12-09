@@ -1,0 +1,16 @@
+{
+  "name": "简搜",
+  "short_name": "简搜",
+  "description": "简洁美观的搜索导航页",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e293b",
+  "theme_color": "#4dabf7",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

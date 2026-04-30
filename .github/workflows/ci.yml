@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate JavaScript syntax
+        run: node --check js/app.js && echo "OK: js/app.js"
+
+      - name: Validate JSON files
+        run: |
+          for f in manifest.json; do
+            node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" && echo "OK: $f" || exit 1
+          done

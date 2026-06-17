@@ -1,16 +1,13 @@
-// 更新日期: 2026-05-01
-const CACHE_NAME = 'jiansou-20260501';
-const ASSETS = [
-  '/index.html',
-  '/favicon.ico',
-  '/icon.svg',
-  '/js/app.js',
-  '/manifest.json'
-];
+// 更新日期: 2026-06-18
+importScripts('js/version.js');
+const CACHE_NAME = 'jiansou-' + APP_VERSION;
+const BASE = new URL('.', self.location).href;
+const ASSET_PATHS = ['index.html', 'icon.svg', 'js/version.js', 'js/constants.js', 'js/utils.js', 'js/search.js', 'js/sites.js', 'js/background.js', 'js/app.js', 'manifest.json', 'sw.js'];
+const ASSETS = ASSET_PATHS.map(p => new URL(p, BASE).href);
 
 const CDN_ASSETS = [
   'https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js',
-  'https://cdn.tailwindcss.com?plugins=forms'
+  'https://cdn.tailwindcss.com/3.4.17?plugins=forms'
 ];
 
 const OFFLINE_HTML = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>简搜 - 离线</title><style>*{margin:0;padding:0;box-sizing:border-box}body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#1e293b;color:#fff;font-family:system-ui,sans-serif;text-align:center}h1{font-size:1.5rem;margin-bottom:.5rem}p{opacity:.6}</style></head><body><div><h1>📡 当前处于离线状态</h1><p>请检查网络连接后刷新页面</p></div></body></html>`;

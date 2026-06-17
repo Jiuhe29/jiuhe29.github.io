@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Validate JavaScript syntax
-        run: node --check js/app.js && echo "OK: js/app.js"
+        run: node --check js/version.js && node --check js/app.js && echo "OK: js/*.js"
 
       - name: Validate JSON files
         run: |

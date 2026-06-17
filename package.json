@@ -1,0 +1,8 @@
+{
+  "name": "jiansou",
+  "private": true,
+  "scripts": {
+    "start": "npx --yes serve@14 . -p 3000",
+    "dev": "npm run start"
+  }
+}

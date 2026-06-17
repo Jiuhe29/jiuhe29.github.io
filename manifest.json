@@ -2,9 +2,9 @@
   "name": "简搜",
   "short_name": "简搜",
   "description": "简洁美观的搜索导航页",
-  "start_url": "/",
-  "scope": "/",
-  "id": "/",
+  "start_url": "./",
+  "scope": "./",
+  "id": "./",
   "display": "standalone",
   "orientation": "any",
   "lang": "zh-CN",
@@ -24,11 +24,6 @@
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "maskable"
-    },
-    {
-      "src": "favicon.ico",
-      "sizes": "48x48",
-      "type": "image/x-icon"
     }
   ]
 }
